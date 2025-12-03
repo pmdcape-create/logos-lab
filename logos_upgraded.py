@@ -63,20 +63,6 @@ fill_prompt = PromptTemplate(
     input_variables=["question", "topic", "context"],
     template="""You are a LOGOS analyst. For the topic '{topic}', answer this guiding question concisely, drawing from context if relevant: '{question}'.
     Ensure alignment with spiritual/physical duality. Context: {context}"""
-)
-fill_chain = LLMChain(llm=llm, prompt=fill_prompt)
-
-@st.cache_data
-def auto_fill_matrix(topic, context):
-    matrix_data = []
-    with st.spinner("AI filling matrix..."):
-        for i, row in enumerate(matrix_questions):
-            row_filled = []
-            for q in row:
-                response = fill_chain.run(question=q, topic=topic, context=" ".join(context))
-                row_filled.append(response)
-            matrix_data.append(row_filled)
-    return np.array(matrix_data)
 
 # Enhanced Laws Check with LLM
 def check_laws_with_llm(matrix_str):
@@ -181,3 +167,4 @@ if st.button("Run Upgraded LOGOS Analysis"):
 st.markdown("---")
 
 st.caption("Upgraded Dec 2025: LLM Auto-Fill, RAG, Observability. Built with LangChain & 2025 Streamlit features.")
+
