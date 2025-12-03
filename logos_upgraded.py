@@ -32,13 +32,13 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-if "dark" in st.get_option("theme"):  # Dynamic theming
-    st.markdown("""
-    <style>
-        .stApp { background-color: #0e1117; }
-        .stMetric { color: #ffffff; }
-    </style>
-    """, unsafe_allow_html=True)
+#if "dark" in st.get_option("theme"):  # Dynamic theming
+#    st.markdown("""
+#    <style>
+#        .stApp { background-color: #0e1117; }
+#        .stMetric { color: #ffffff; }
+#    </style>
+#    """, unsafe_allow_html=True)
 
 # LLM Setup
 @st.cache_resource
@@ -179,4 +179,5 @@ if st.button("Run Upgraded LOGOS Analysis"):
         st.error("Enter a topic!")
 
 st.markdown("---")
+
 st.caption("Upgraded Dec 2025: LLM Auto-Fill, RAG, Observability. Built with LangChain & 2025 Streamlit features.")
