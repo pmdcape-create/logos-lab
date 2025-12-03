@@ -1,0 +1,2 @@
+text\nstreamlit>=1.38\npandas\nnumpy\nsympy\nscikit-learn\nmatplotlib\nlangchain\nlangchain-openai\nlangchain-groq\nopenai\ngroq\n
+
