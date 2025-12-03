@@ -1,0 +1,12 @@
+streamlit
+pandas
+numpy
+sympy==1.12.1
+scikit-learn
+matplotlib
+langchain==0.3.20
+langchain-openai
+langchain-groq
+openai
+groq
+faiss-cpu
