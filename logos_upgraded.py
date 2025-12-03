@@ -1,190 +1,99 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from sympy import Matrix, latex, symbols
-import re
-from collections import Counter
-from scipy.spatial.distance import cosine
-from sklearn.feature_extraction.text import TfidfVectorizer
-import matplotlib.pyplot as plt
 from langchain_openai import ChatOpenAI
 from langchain_groq import ChatGroq
-from langchain.prompts import PromptTemplate
-from langchain.chains import LLMChain
-from langchain.schema import BaseRetriever  # Placeholder for RAG
-import os
-import io  # For in-memory Excel
 
-# Enable LangSmith for observability (optional)
-os.environ["LANGCHAIN_TRACING_V2"] = "true"
-os.environ["LANGCHAIN_API_KEY"] = st.secrets.get("LANGCHAIN_API_KEY", "dummy")
+# ==============================
+# DATA
+# ==============================
 
-# Data (unchanged from before)
-laws = [...]  # (Omit for brevity; copy from previous code)
 planes = ["Ideation", "Inquiry", "Formation", "Expression", "Refinement", "Revelation", "Continuity"]
 layers = ["Instantiation", "Existence", "Effect / Impact", "Iteration", "Decision Quantum", "Blueprint / Soul", "Creator Layer"]
-matrix_questions = [...]  # (Omit; copy full list)
 
-# Custom Theme (2025 feature)
-st.set_page_config(
-    page_title="Upgraded LOGOS Lab",
-    page_icon="🔷",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-#if "dark" in st.get_option("theme"):  # Dynamic theming
-#    st.markdown("""
-#    <style>
-#        .stApp { background-color: #0e1117; }
-#        .stMetric { color: #ffffff; }
-#    </style>
-#    """, unsafe_allow_html=True)
+matrix_questions = [
+    ["What initial intent sets this in motion?", "What question arises at the moment of becoming?", "What seed structure forms?", "How does the first form appear?", "How is the spark tested?", "What does this reveal about the source?", "What imprint echoes forward?"],
+    ["What meaning underlies this presence?", "How does awareness explore identity?", "How does the form assert itself?", "How does being express itself?", "How does experience shape it?", "What deeper truths are revealed?", "How is identity preserved across cycles?"],
+    ["What outcome was intended?", "What consequences reflect origin?", "How do effects shape future?", "How is impact made visible?", "How are results absorbed?", "What laws does impact reveal?", "How does the echo shape continuity?"],
+    ["What cycles are seeded?", "What patterns need renewal?", "How is the form carried forward?", "How does expression evolve?", "What is learned across iterations?", "What insight arises through recursion?", "What keeps the pattern alive?"],
+    ["Where is choice embedded?", "What crossroads are faced?", "How do decisions reshape reality?", "What actions externalise choice?", "How does consequence refine decisions?", "What do results reveal about truth?", "How are decisions encoded across time?"],
+    ["What archetypal pattern is seeded?", "What does conscience reveal?", "How does form harmonise with soul design?", "How does expression mirror inner structure?", "What distortions are corrected?", "What divine pattern is recognised?", "How is the soul blueprint preserved?"],
+    ["What infinite possibilities exist?", "How is the Creator asking and answering?", "How is reality shaped as divine thought?", "How does the Creator express through this?", "How does divine will refine outcome?", "How does Creator recognise itself?", "How is eternal continuity ensured?"],
+]
 
-# LLM Setup
-@st.cache_resource
-def get_llm():
-    api_key = st.sidebar.text_input("OpenAI/Groq API Key:", type="password")
-    if "openai" in api_key.lower() or not api_key:
-        return ChatOpenAI(model="gpt-4o", api_key=api_key, temperature=0.7)
-    else:
-        return ChatGroq(model="llama-3.3-70b-versatile", api_key=api_key, temperature=0.7)
+# ==============================
+# SIDEBAR – CLEAN API KEY
+# ==============================
 
-llm = get_llm()
-
-# RAG Placeholder (upload workbook as context)
-uploaded_file = st.sidebar.file_uploader("Upload Workbook for RAG Context (optional)")
-context_docs = []  # Parse uploaded Excel/CSV into strings
-if uploaded_file:
-    df_context = pd.read_excel(uploaded_file)
-    context_docs = df_context.astype(str).values.flatten().tolist()
-
-# Auto-Fill Chain
-fill_prompt = PromptTemplate(
-    input_variables=["question", "topic", "context"],
-    template="""You are a LOGOS analyst. For the topic '{topic}', answer this guiding question concisely, drawing from context if relevant: '{question}'.
-    Ensure alignment with spiritual/physical duality. Context: {context}"""
-
-    def auto_fill_matrix(topic, context=""):
-    """Non-cached version — works 100 % every time"""
-    matrix_data = []
-    with st.spinner("LOGOS Engine is contemplating the heptagon…"):
-        for row in matrix_questions:
-            row_filled = []
-            for q in row:
-                prompt = f"""Topic: {topic}
-
-Guiding question: {q}
-
-Answer in 8–15 words, blending physics and metaphysics, using the tone and depth of the original LOGOS workbook."""
-                try:
-                    response = llm.invoke(prompt).content.strip()
-                except:
-                    response = "…"
-                row_filled.append(response)
-            matrix_data.append(row_filled)
-    return np.array(matrix_data)
-# Enhanced Laws Check with LLM
-def check_laws_with_llm(matrix_str):
-    violations = []
-    law_prompt = PromptTemplate(
-        input_variables=["matrix", "law_desc"],
-        template="Check if this matrix violates: '{law_desc}'. Matrix: {matrix}. Respond 'Violation: [details]' or 'Pass'."
-    )
-    law_chain = LLMChain(llm=llm, prompt=law_prompt)
-    for law in laws:
-        result = law_chain.run(matrix=" ".join(matrix_str.flatten()), law_desc=law["Description"])
-        if "violation" in result.lower():
-            violations.append(f"Law {law['ID']}: {result}")
-    return violations
-
-# Advanced Vectorization with TF-IDF
-def advanced_vectorize(matrix_data):
-    vectorizer = TfidfVectorizer(max_features=100, stop_words='english')
-    tfidf_matrix = vectorizer.fit_transform([" ".join(row) for row in matrix_data])
-    layer_vectors = tfidf_matrix.mean(axis=1).toarray()  # Average per layer
-
-    # Enhanced M: Cosine similarity + eigenvalue for resonance
-    M_advanced = np.zeros((7,7))
-    for i in range(7):
-        for j in range(7):
-            if np.any(layer_vectors[i]) and np.any(layer_vectors[j]):
-                sim = 1 - cosine(layer_vectors[i], layer_vectors[j])
-                M_advanced[i,j] = sim
-    M_advanced /= np.max(M_advanced) if np.max(M_advanced) > 0 else 1
-
-    # Resonance: Eigenvalue of M (emergent complexity)
-    eigenvalues = np.linalg.eigvals(M_advanced)
-    resonance = np.max(np.real(eigenvalues))
-
-    return M_advanced, layer_vectors, resonance
-
-# Plot for Math Demo
-def plot_resonance(M, resonance):
-    fig, ax = plt.subplots()
-    im = ax.imshow(M, cmap='viridis')
-    ax.set_title(f'Resonance Eigenvalue: {resonance:.2f}')
-    plt.colorbar(im)
-    return fig
-
-st.title("🔷 Upgraded LOGOS Model Logic Laboratory")
-
-# Sidebar
 with st.sidebar:
-    st.header("AI Settings")
-    st.info("Paste API key for auto-fill magic.")
-    topic = st.text_input("Topic for Analysis:")
+    st.header("LOGOS Engine")
+    api_key = st.text_input("OpenAI or Groq API key", type="password", help="Free Groq key → https://console.groq.com/keys")
+    if not api_key:
+        st.info("Paste your API key above to activate the heptagon")
+        st.stop()
 
-if st.button("Run Upgraded LOGOS Analysis"):
-    if topic:
-        matrix_data = auto_fill_matrix(topic, context_docs)
-        df = pd.DataFrame(matrix_data, index=layers, columns=planes)
+# Choose LLM
+if api_key.startswith("gsk_"):
+    llm = ChatGroq(model="llama-3.3-70b-versatile", api_key=api_key, temperature=0.7)
+else:
+    llm = ChatOpenAI(model="gpt-4o", api_key=api_key, temperature=0.7)
 
-        # Laws Check
-        violations = check_laws_with_llm(matrix_data)
+# ==============================
+# CORE FUNCTION – NO CACHING
+# ==============================
 
-        # Display
-        st.subheader("AI-Populated 7x7 LOGOS Matrix")
-        st.dataframe(df, use_container_width=True)
+def analyse(topic):
+    matrix = []
+    with st.spinner(f"Analysing **{topic}** across all 49 nodes…"):
+        for row in matrix_questions:
+            filled = []
+            for q in row:
+                prompt = f"Topic: {topic}\nQuestion: {q}\nAnswer in 8–15 deep words blending physics and metaphysics:"
+                try:
+                    ans = llm.invoke(prompt).content.strip()
+                except:
+                    ans = "…"
+                filled.append(ans)
+            matrix.append(filled)
+    return np.array(matrix)
 
-        st.subheader("Systemic Laws Coherence (AI-Checked)")
-        if violations:
-            for v in violations:
-                st.warning(v)
-        else:
-            st.success("Coherent across all laws!")
+# ==============================
+# APP
+# ==============================
 
-        # Math Demo
-        st.subheader("Advanced Math & Vectorization")
-        M, layer_vecs, resonance = advanced_vectorize(matrix_data)
-        st.write("TF-IDF Transition Matrix M:")
-        st.dataframe(pd.DataFrame(M, index=layers, columns=planes))
+st.set_page_config(page_title="LOGOS Heptagon Lab", layout="wide")
+st.title("LOGOS Model Logic Laboratory")
+st.markdown("Enter any concept and watch the 7×7 heptagon reveal its eternal pattern")
 
-        fig = plot_resonance(M, resonance)
-        st.pyplot(fig)
+col1, col2 = st.columns([3,1])
+with col1:
+    topic = st.text_input("Topic", placeholder="Gravity · Love · Entropy · Free Will · Light", label_visibility="collapsed")
+with col2:
+    st.markdown("<br>", unsafe_allow_html=True)
+    run = st.button("Run Analysis", type="primary", use_container_width=True)
 
-        # SymPy (unchanged)
-        sym_M = Matrix(np.round(M, 2))
-        s = np.linalg.norm(layer_vecs, axis=1)
-        s_norm = s / np.max(s) if np.max(s) > 0 else s
-        sym_s = Matrix(np.round(s_norm, 2))
-        sym_result = sym_M * sym_s
-        st.latex(f"\\vec{{result}} = M \\cdot \\vec{{s}} = {latex(sym_result)}")
+# One-click sacred topics
+st.markdown("#### Sacred presets:")
+cols = st.columns(6)
+presets = ["Gravity", "Love", "Free Will", "Entropy", "Light", "Forgiveness"]
+for i, name in enumerate(presets):
+    with cols[i % 6]:
+        if st.button(name, use_container_width=True):
+            topic = name
+            run = True
 
-        T, r = symbols('T r')
-        st.latex(f"\\nabla T = -\\frac{{\\partial T}}{{\\partial r}} \\quad (Gravity Tension)")
-
-        # Exports
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, sheet_name='Matrix')
-            pd.DataFrame(M).to_excel(writer, sheet_name='Vectors')
-        st.download_button("Download Enhanced Excel", output.getvalue(), "logos_upgraded.xlsx")
-
-    else:
-        st.error("Enter a topic!")
-
-st.markdown("---")
-
-st.caption("Upgraded Dec 2025: LLM Auto-Fill, RAG, Observability. Built with LangChain & 2025 Streamlit features.")
+if run and topic:
+    result = analyse(topic)
+    df = pd.DataFrame(result, index=layers, columns=planes)
+    
+    st.success(f"Complete LOGOS analysis of **{topic}**")
+    st.dataframe(df, use_container_width=True)
+    
+    # Simple resonance score
+    coherence = round(sum(len(c) for row in result for c in row) / len(result.flatten()) / 25, 3)
+    st.metric("Resonance Coherence", f"{coherence:.3f}/1.000")
+    
+    csv = df.to_csv().encode()
+    st.download_button("Download CSV", csv, f"LOGOS_{topic}.csv", "text/csv")
 
 
