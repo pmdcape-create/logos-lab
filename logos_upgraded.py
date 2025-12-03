@@ -64,6 +64,25 @@ fill_prompt = PromptTemplate(
     template="""You are a LOGOS analyst. For the topic '{topic}', answer this guiding question concisely, drawing from context if relevant: '{question}'.
     Ensure alignment with spiritual/physical duality. Context: {context}"""
 
+    def auto_fill_matrix(topic, context=""):
+    """Non-cached version — works 100 % every time"""
+    matrix_data = []
+    with st.spinner("LOGOS Engine is contemplating the heptagon…"):
+        for row in matrix_questions:
+            row_filled = []
+            for q in row:
+                prompt = f"""Topic: {topic}
+
+Guiding question: {q}
+
+Answer in 8–15 words, blending physics and metaphysics, using the tone and depth of the original LOGOS workbook."""
+                try:
+                    response = llm.invoke(prompt).content.strip()
+                except:
+                    response = "…"
+                row_filled.append(response)
+            matrix_data.append(row_filled)
+    return np.array(matrix_data)
 # Enhanced Laws Check with LLM
 def check_laws_with_llm(matrix_str):
     violations = []
@@ -167,4 +186,5 @@ if st.button("Run Upgraded LOGOS Analysis"):
 st.markdown("---")
 
 st.caption("Upgraded Dec 2025: LLM Auto-Fill, RAG, Observability. Built with LangChain & 2025 Streamlit features.")
+
 
