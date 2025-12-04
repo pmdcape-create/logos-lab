@@ -11,6 +11,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 
+
 # ==============================
 # 7×7 HEPTAGON STRUCTURE
 # ==============================
@@ -225,3 +226,4 @@ if st.session_state.df is not None:
                            f"LOGOS_Findings_{st.session_state.topic}.pdf", "application/pdf")
 else:
     st.info("Type your real question above and click **Ask LOGOS**.")
+
