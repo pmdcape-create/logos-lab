@@ -168,7 +168,7 @@ with col1:
     )
 with col2:
     st.markdown("<br>", unsafe_allow_html=True)
-    run = st.button("Ask the Oracle", type="primary", use_container_width=True)
+    run = st.button("Ask LOGOS", type="primary", use_container_width=True)
 
 topic = sentence_to_topic(natural_sentence)
 if natural_sentence.strip() and topic and topic != "Unknown":
@@ -254,6 +254,7 @@ else:
     st.info("Speak your truth above. The oracle is listening.")
 
 st.markdown("<br><br>Built with love — may all beings find peace.", unsafe_allow_html=True)
+
 
 
 
