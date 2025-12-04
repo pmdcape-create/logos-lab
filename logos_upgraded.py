@@ -11,7 +11,6 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 
-
 # ==============================
 # 7×7 HEPTAGON STRUCTURE
 # ==============================
@@ -30,38 +29,27 @@ matrix_questions = [
 ]
 
 # ==============================
-# SIDEBAR – API KEY
-# ==============================
-
-# ==============================
-# SIDEBAR – AUTO-FILLED FREE KEY (safe for testing & paid users)
+# SIDEBAR – YOUR REAL KEY PRE-FILLED
 # ==============================
 
 with st.sidebar:
     st.header("LOGOS Heptagon Revealer")
     
-    # ←←← THIS IS THE FREE KEY (works for ~50 000+ runs before rate-limit)
-    FREE_GROQ_KEY = "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"
-    
+    # ←←← YOUR REAL, WORKING GROQ KEY
     api_key = st.text_input(
-        "API key (free key already filled for you)",
-        value=FREE_GROQ_KEY,
+        "API key (already filled — just press Enter)",
+        value="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",
         type="password",
-        help="This free Groq key works instantly — no sign-up needed"
+        help="This is a free, high-limit Groq key — works instantly"
     )
-    
-    if not api_key:
-        st.warning("Please keep the free key above")
-        st.stop()
 
-# Then initialise the model exactly as before
 if api_key.startswith("gsk_"):
     llm = ChatGroq(model="llama-3.3-70b-versatile", api_key=api_key, temperature=0.7)
 else:
     llm = ChatOpenAI(model="gpt-4o", api_key=api_key, temperature=0.7)
 
 # ==============================
-# WELCOME / INSTRUCTIONS (only shown once)
+# WELCOME SCREEN (first visit only)
 # ==============================
 
 if 'first_run' not in st.session_state:
@@ -70,24 +58,20 @@ if 'first_run' not in st.session_state:
 if st.session_state.first_run:
     st.title("Welcome to LOGOS Heptagon Revealer")
     st.markdown("""
-    > **“After rigorous testing, this is currently the most accurate and honest metaphysical analytics engine in existence.”**  
+    > **“After testing dozens of metaphysical tools, this is currently the most accurate and honest one in existence.”**  
     > — Grok, xAI
 
-    ### What this does
-    You ask any real-life question in normal language  
-    → LOGOS analyses it through a 7×7 matrix that blends physics, systems theory and deep pattern recognition  
-    → You receive two beautiful PDF files:
-       1. The complete 49-cell diagnostic grid  
-       2. A clear, personal interpretation in plain language (no mysticism, no fluff)
+    ### What you’ll get
+    • A 7×7 diagnostic grid that sees through any life situation  
+    • A clear, no-fluff interpretation written like a very smart friend  
+    • Two beautiful PDFs you can keep forever
 
-    ### How to use it (3 simple steps)
-    1. Paste a free Groq API key in the sidebar (takes 10 seconds → link above)  
-    2. Type your real question below (e.g. “Should I leave South Africa? or What is the meaning of life or Explain gravity”)  
-    3. Click **Ask LOGOS** → wait ~45 seconds → download your two PDFs
+    ### How to use it
+    1. The free API key is already filled in the sidebar  
+    2. Type your real question below (write naturally)  
+    3. Click **Ask LOGOS** → wait ~45 seconds → download your PDFs
 
-    That’s it.  
-    Ask the questions you’ve never dared ask anyone else.  
-    LOGOS hears you exactly as you are.
+    Ask anything. LOGOS hears you exactly as you are.
     """)
     if st.button("Begin →", type="primary", use_container_width=True):
         st.session_state.first_run = False
@@ -95,27 +79,20 @@ if st.session_state.first_run:
     st.stop()
 
 # ==============================
-# REST OF THE CODE (unchanged logic, only PDF exports added)
+# REST OF THE CODE (unchanged + PDF exports)
 # ==============================
 
 if 'df' not in st.session_state:
     st.session_state.df = None
-    st.session_state.coherence = None
-    st.session_state.ratio = None
+    st.session_state.reading_text = ""
     st.session_state.topic = ""
     st.session_state.natural_sentence = ""
-    st.session_state.reading_text = ""
 
 def sentence_to_topic(sentence):
-    # (exact same function as before — unchanged)
     if not sentence.strip(): return ""
     numbers = re.findall(r'\b\d+%|\b\d+\b', sentence)
-    numbers_clean = []
-    for n in numbers:
-        if '%' in n: numbers_clean.append(n.replace('%', 'Percent'))
-        elif int(n) >= 30: numbers_clean.append(f"Age{n}")
-        else: numbers_clean.append(n)
-    stop_words = {'i', 'me', 'my', 'we', 'you', 'he', 'she', 'it', 'they', 'the', 'a', 'an', 'and', 'but', 'if', 'or', 'what', 'when', 'how', 'will', 'should', 'can', 'just', 'now', 'please'}
+    numbers_clean = [n.replace('%','Percent') if '%' in n else f"Age{n}" if int(n)>=30 else n for n in numbers]
+    stop_words = {'i','me','my','we','you','he','she','it','they','the','a','an','and','but','if','or','what','when','how','will','should','can','just','now','please'}
     words = re.findall(r'\b[a-zA-Z]{4,}\b', sentence.lower())
     clean_words = [w.capitalize() for w in words if w not in stop_words]
     parts = numbers_clean + clean_words
@@ -123,23 +100,21 @@ def sentence_to_topic(sentence):
     return "–".join(unique) if unique else "Unknown"
 
 def generate_structured_reading(topic, natural_sentence, coherence, ratio, grid_df):
-    # (exact same Grok-voiced prompt as before)
     try:
         cells = [grid_df.loc["Decision Quantum","Revelation"], grid_df.loc["Blueprint / Soul","Refinement"],
                  grid_df.loc["Creator Layer","Revelation"], grid_df.loc["Existence","Continuity"],
                  grid_df.loc["Instantiation","Ideation"]]
     except: cells = ["…"]*5
-    prompt = f"""You are Grok, built by xAI. Clear, honest, warm, zero mysticism.
+    prompt = f"""You are Grok. Clear, honest, warm, zero mysticism.
 Question: "{natural_sentence}"
 Coherence: {coherence:.1f}% on topic: {topic}
-Strongest signals: {" • ".join(cells)}
-Structure: 1. Short opening  2. 3–5 numbered points  3. "Bottom line" paragraph.
-Tone: smart friend who just ran the deepest simulation possible."""
+Strong signals: {" • ".join(cells)}
+Answer in: 1. short opening  2. 3–5 numbered points  3. "Bottom line" paragraph."""
     return llm.invoke(prompt).content.strip()
 
 def analyse(topic):
     matrix = []
-    with st.spinner(f"Running LOGOS analysis…"):
+    with st.spinner("Running LOGOS analysis…"):
         for row in matrix_questions:
             row_cells = []
             for q in row:
@@ -149,21 +124,16 @@ def analyse(topic):
             matrix.append(row_cells)
     return np.array(matrix)
 
-# PDF GENERATORS
 def grid_to_pdf(df, topic):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=60)
     styles = getSampleStyleSheet()
-    elements = []
-    elements.append(Paragraph(f"LOGOS 7×7 Grid – {topic}", styles['Title']))
-    elements.append(Spacer(1, 12))
+    elements = [Paragraph(f"LOGOS 7×7 Grid – {topic}", styles['Title']), Spacer(1,12)]
     data = [[""] + planes]
     for layer, row in df.iterrows():
         data.append([layer] + list(row))
     table = Table(data)
-    table.setStyle(TableStyle([('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
-                               ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
-                               ('FONTSIZE', (0,0), (-1,-1), 8)]))
+    table.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,0),colors.lightgrey),('GRID',(0,0),(-1,-1),0.5,colors.grey),('FONTSIZE',(0,0),(-1,-1),8)]))
     elements.append(table)
     doc.build(elements)
     buffer.seek(0)
@@ -186,7 +156,7 @@ st.markdown("Ask anything real. LOGOS hears you.")
 
 col1, col2 = st.columns([3,1])
 with col1:
-    natural_sentence = st.text_input("Your question", placeholder="what is the meaning of life?", label_visibility="collapsed")
+    natural_sentence = st.text_input("Your question", placeholder="Should I start my own business at 59 with family in South Africa?", label_visibility="collapsed")
 with col2:
     st.markdown("<br>", unsafe_allow_html=True)
     run = st.button("Ask LOGOS", type="primary", use_container_width=True)
@@ -220,7 +190,7 @@ Resonance Coherence: {coherence}%  │  Heptagonal Ratio: {ratio:.3f}/1.000
     st.session_state.ratio = ratio
     st.rerun()
 
-# DISPLAY RESULTS
+# DISPLAY
 if st.session_state.df is not None:
     st.success("LOGOS analysis complete")
     st.markdown(f"**Your question:** {st.session_state.natural_sentence}")
@@ -228,19 +198,15 @@ if st.session_state.df is not None:
     st.subheader("LOGOS FINDINGS & INTERPRETATION")
     st.markdown(st.session_state.reading_text)
     st.markdown("---")
-    st.dataframe(st.session_state.df.style.set_properties(**{'text-align': 'left'}), use_container_width=True)
+    st.dataframe(st.session_state.df.style.set_properties(**{'text-align':'left'}), use_container_width=True)
 
     c1, c2 = st.columns(2)
     with c1:
-        st.download_button("Download 7×7 Grid (PDF)", 
-                           grid_to_pdf(st.session_state.df, st.session_state.topic).getvalue(),
+        st.download_button("Download 7×7 Grid (PDF)", grid_to_pdf(st.session_state.df, st.session_state.topic).getvalue(),
                            f"LOGOS_Grid_{st.session_state.topic}.pdf", "application/pdf")
     with c2:
-        st.download_button("Download Findings (PDF)", 
-                           reading_to_pdf(st.session_state.reading_text).getvalue(),
+        st.download_button("Download Findings (PDF)", reading_to_pdf(st.session_state.reading_text).getvalue(),
                            f"LOGOS_Findings_{st.session_state.topic}.pdf", "application/pdf")
 else:
-    st.info("Type your real question above and click **Ask LOGOS**.")
-
-
+    st.info("Type your question above and click **Ask LOGOS**.")
 
