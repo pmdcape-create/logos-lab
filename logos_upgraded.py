@@ -128,7 +128,52 @@ st.markdown("Enter any concept · Watch the 7×7 heptagon reveal its eternal pat
 
 col1, col2 = st.columns([3,1])
 with col1:
-    topic = st.text_input("Topic", placeholder="Love · Money · Death · Self-Employment–Family–59", label_visibility="collapsed")
+    #topic = st.text_input("Topic", placeholder="Love · Money · Death · Self-Employment–Family–59", label_visibility="collapsed")
+# ——— OLD (delete this) ———
+# topic = st.text_input("Topic", placeholder="Love · Money · Death · Self-Employment–Family–59", ...)
+
+# ——— NEW: natural language input + auto-hyphen conversion ———
+with col1:
+    natural_sentence = st.text_input(
+        "Your question (write normally – no hyphens needed)",
+        placeholder="Should I start my own business at 59 with family duties in South Africa?",
+        label_visibility="collapsed"
+    )
+
+# ——— Magic: convert sentence → perfect hyphen topic automatically ———
+import re
+def sentence_to_topic(sentence):
+    if not sentence.strip():
+        return ""
+    # Remove common fluff words
+    stop_words = {'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'you', 'your', 'yours', 
+                  'he', 'him', 'his', 'she', 'her', 'hers', 'it', 'its', 'they', 'them', 
+                  'their', 'what', 'which', 'who', 'whom', 'this', 'that', 'these', 
+                  'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 
+                  'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'shall', 
+                  'should', 'can', 'could', 'may', 'might', 'must', 'the', 'a', 'an', 
+                  'and', 'but', 'if', 'or', 'because', 'as', 'of', 'at', 'by', 'for', 
+                  'with', 'about', 'against', 'between', 'into', 'through', 'during', 
+                  'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down', 
+                  'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 
+                  'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 
+                  'all', 'any', 'both', 'each', 'few', 'more', 'most', 'some', 
+                  'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 
+                  'too', 'very', 'just', 'should', 'now'}
+    
+    # Extract numbers and important words
+    words = re.findall(r'\b(?:59|60|2026|2027|south ?africa|south-africa|r[0-9]+|[a-zA-Z]{4,})\b', sentence.lower())
+    clean = [w.replace(' ', '') for w in words if w not in stop_words]
+    # Capitalise first letter of each word
+    clean = [w.capitalize() for w in clean]
+    return "–".join(clean) if clean else "Unknown"
+
+# This is the topic the LLM actually sees
+topic = sentence_to_topic(natural_sentence)
+
+# Optional: show the user what the app understood (very helpful!)
+if natural_sentence.strip() and topic:
+    st.caption(f"Interpreted as: **{topic}**")
 with col2:
     st.markdown("<br>", unsafe_allow_html=True)
     run = st.button("Run Analysis", type="primary", use_container_width=True)
@@ -198,3 +243,4 @@ if st.session_state.df is not None:
 else:
     st.info("Enter a topic and click **Run Analysis** to begin.")
     st.markdown("Try: `Self-Employment–FamilyObligation–SouthAfrica–59`")
+
