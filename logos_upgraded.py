@@ -121,12 +121,27 @@ Answer in: 1. short opening  2. 3–5 numbered points  3. "Bottom line" paragrap
 
 def analyse(topic):
     matrix = []
+    import time
     with st.spinner("Running LOGOS analysis…"):
         for row in matrix_questions:
             row_cells = []
             for q in row:
                 prompt = f"Topic: {topic}\nQuestion: {q}\nAnswer in 8–15 profound words blending physics and metaphysics:"
-                ans = llm.invoke(prompt).content.strip()
+                max_retries = 3
+                ans = "…"
+                for attempt in range(max_retries):
+                    try:
+                        ans = llm.invoke(prompt).content.strip()
+                        time.sleep(0.5)  # 0.5s pause between calls (keeps under RPM/TPM)
+                        break
+                    except Exception as e:
+                        if "429" in str(e):  # Rate limit
+                            wait_time = 60 if attempt == 0 else 120  # 60s first, then longer
+                            st.warning(f"Rate limit — pausing {wait_time}s (attempt {attempt + 1}/{max_retries})")
+                            time.sleep(wait_time)
+                        else:
+                            st.error(f"Unexpected error: {e}")
+                            break
                 row_cells.append(ans)
             matrix.append(row_cells)
     return np.array(matrix)
@@ -220,4 +235,5 @@ if st.session_state.df is not None:
                            f"LOGOS_Findings_{st.session_state.topic}.pdf", "application/pdf")
 else:
     st.info("Get your free key → paste it → ask your question.")
+
 
