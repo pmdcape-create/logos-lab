@@ -138,7 +138,7 @@ Tone: like a very smart friend who ran the most accurate simulation possible and
 
 def analyse(topic):
     matrix = []
-    with st.spinner(f"Consulting the oracle on **{topic}**…"):
+    with st.spinner(f"Consulting LOGOS on **{topic}**…"):
         for row in matrix_questions:
             row_cells = []
             for q in row:
@@ -157,7 +157,7 @@ def analyse(topic):
 
 st.set_page_config(page_title="LOGOS Revealer", layout="wide")
 st.title("LOGOS Heptagon Revealer")
-st.markdown("Ask anything real. Write exactly as you would to a wise person. The LOGOS hears you.")
+st.markdown("Ask anything real. Write exactly as you would to a wise person. LOGOS hears you.")
 
 col1, col2 = st.columns([3,1])
 with col1:
@@ -226,7 +226,7 @@ Resonance Coherence: {coherence}%  │  Heptagonal Ratio: {ratio:.3f}/1.000
     st.rerun()
 
 # ==============================
-# DISPLAY THE SACRED READING
+# DISPLAY THE ASSESMENT
 # ==============================
 
 if st.session_state.df is not None:
@@ -254,6 +254,7 @@ else:
     st.info("Speak your truth above. LOGOS will interpret what you say.")
 
 st.markdown("<br><br>Built with integrity and accurance and truth — may all find wisdom in the truth.", unsafe_allow_html=True)
+
 
 
 
