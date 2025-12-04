@@ -164,7 +164,11 @@ st.markdown("Ask anything real. LOGOS hears you.")
 
 col1, col2 = st.columns([3,1])
 with col1:
-    natural_sentence = st.text_input("Your question", placeholder="Should I start my own business at 59 with family in South Africa?", label_visibility="collapsed")
+    natural_sentence = st.text_input(
+    "Your question",
+    placeholder="Should I start my own business? │ What is conciousness? │ Why am I still alive kidney-function-6% age-85?",
+    label_visibility="collapsed"
+)
 with col2:
     st.markdown("<br>", unsafe_allow_html=True)
     run = st.button("Ask LOGOS", type="primary", use_container_width=True)
