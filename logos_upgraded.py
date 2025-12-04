@@ -37,7 +37,7 @@ with st.sidebar:
     
     # ←←← YOUR REAL, WORKING GROQ KEY
     api_key = st.text_input(
-        "API key (already filled — just press Enter)",
+        "API key (already filled — JUST PRESS ENTER)",
         value="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",
         type="password",
         help="This is a free, high-limit Groq key — works instantly"
@@ -156,7 +156,7 @@ st.markdown("Ask anything real. LOGOS hears you.")
 
 col1, col2 = st.columns([3,1])
 with col1:
-    natural_sentence = st.text_input("Your question", placeholder="Should I start my own business at 59 with family in South Africa?", label_visibility="collapsed")
+    natural_sentence = st.text_input("Your question", placeholder="Should I start my own business ? or what is Gravity?", label_visibility="collapsed")
 with col2:
     st.markdown("<br>", unsafe_allow_html=True)
     run = st.button("Ask LOGOS", type="primary", use_container_width=True)
@@ -209,4 +209,3 @@ if st.session_state.df is not None:
                            f"LOGOS_Findings_{st.session_state.topic}.pdf", "application/pdf")
 else:
     st.info("Type your question above and click **Ask LOGOS**.")
-
