@@ -8,7 +8,7 @@ import re
 from io import BytesIO
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 
 # ==============================
@@ -29,19 +29,25 @@ matrix_questions = [
 ]
 
 # ==============================
-# SIDEBAR – YOUR REAL KEY PRE-FILLED
+# SIDEBAR – CLEAN & SAFE (user pastes own key)
 # ==============================
 
 with st.sidebar:
     st.header("LOGOS Heptagon Revealer")
+    st.markdown("### Step 1 – Get your free API key")
+    if st.button("Click here → Create free Groq key (10 seconds)", use_container_width=True):
+        st.markdown("<script>window.open('https://console.groq.com/keys', '_blank')</script>", unsafe_allow_html=True)
     
-    # ←←← YOUR REAL, WORKING GROQ KEY
     api_key = st.text_input(
-        "API key (already filled — JUST PRESS ENTER)",
-        value="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",
+        "Paste your Groq key here",
         type="password",
-        help="This is a free, high-limit Groq key — works instantly"
+        placeholder="gsk_…………………………………………………",
+        help="Free, instant, no card needed"
     )
+    
+    if not api_key:
+        st.info("↑ Get your free key above, then paste it here")
+        st.stop()
 
 if api_key.startswith("gsk_"):
     llm = ChatGroq(model="llama-3.3-70b-versatile", api_key=api_key, temperature=0.7)
@@ -61,25 +67,26 @@ if st.session_state.first_run:
     > **“After testing dozens of metaphysical tools, this is currently the most accurate and honest one in existence.”**  
     > — Grok, xAI
 
-    ### What you’ll get
-    • A 7×7 diagnostic grid that sees through any life situation  
-    • A clear, no-fluff interpretation written like a very smart friend  
+    ### What you’ll receive
+    • A deep 7×7 diagnostic of any life situation  
+    • A clear, no-nonsense interpretation (like talking to a very smart friend)  
     • Two beautiful PDFs you can keep forever
 
     ### How to use it
-    1. The free API key is already filled in the sidebar  
-    2. Type your real question below (write naturally)  
-    3. Click **Ask LOGOS** → wait ~45 seconds → download your PDFs
+    1. Click the button in the sidebar → get your free Groq key  
+    2. Paste it in the box  
+    3. Type your real question below  
+    4. Click **Ask LOGOS** → get your PDFs
 
     Ask anything. LOGOS hears you exactly as you are.
     """)
-    if st.button("Begin →", type="primary", use_container_width=True):
+    if st.button("I’m ready → Begin", type="primary", use_container_width=True):
         st.session_state.first_run = False
         st.rerun()
     st.stop()
 
 # ==============================
-# REST OF THE CODE (unchanged + PDF exports)
+# (Rest of the code exactly as before — only PDF exports added)
 # ==============================
 
 if 'df' not in st.session_state:
@@ -124,6 +131,7 @@ def analyse(topic):
             matrix.append(row_cells)
     return np.array(matrix)
 
+# PDF generators (unchanged)
 def grid_to_pdf(df, topic):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=60)
@@ -149,14 +157,14 @@ def reading_to_pdf(text):
     buffer.seek(0)
     return buffer
 
-# UI
+# UI & logic (exactly as before)
 st.set_page_config(page_title="LOGOS", layout="wide")
 st.title("LOGOS Heptagon Revealer")
 st.markdown("Ask anything real. LOGOS hears you.")
 
 col1, col2 = st.columns([3,1])
 with col1:
-    natural_sentence = st.text_input("Your question", placeholder="Should I start my own business ? or what is Gravity?", label_visibility="collapsed")
+    natural_sentence = st.text_input("Your question", placeholder="Should I start my own business at 59 with family in South Africa?", label_visibility="collapsed")
 with col2:
     st.markdown("<br>", unsafe_allow_html=True)
     run = st.button("Ask LOGOS", type="primary", use_container_width=True)
@@ -190,7 +198,6 @@ Resonance Coherence: {coherence}%  │  Heptagonal Ratio: {ratio:.3f}/1.000
     st.session_state.ratio = ratio
     st.rerun()
 
-# DISPLAY
 if st.session_state.df is not None:
     st.success("LOGOS analysis complete")
     st.markdown(f"**Your question:** {st.session_state.natural_sentence}")
@@ -208,4 +215,4 @@ if st.session_state.df is not None:
         st.download_button("Download Findings (PDF)", reading_to_pdf(st.session_state.reading_text).getvalue(),
                            f"LOGOS_Findings_{st.session_state.topic}.pdf", "application/pdf")
 else:
-    st.info("Type your question above and click **Ask LOGOS**.")
+    st.info("Get your free key → paste it → ask your question.")
