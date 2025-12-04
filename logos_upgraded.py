@@ -4,9 +4,10 @@ import numpy as np
 from langchain_openai import ChatOpenAI
 from langchain_groq import ChatGroq
 import datetime
+import re
 
 # ==============================
-# DATA – 7×7 HEPTAGON
+# 7×7 HEPTAGON DATA
 # ==============================
 
 planes = ["Ideation", "Inquiry", "Formation", "Expression", "Refinement", "Revelation", "Continuity"]
@@ -27,32 +28,55 @@ matrix_questions = [
 # ==============================
 
 with st.sidebar:
-    st.header("LOGOS Engine")
-    api_key = st.text_input("OpenAI or Groq API key", type="password", help="Free Groq key → https://console.groq.com/keys")
+    st.header("LOGOS Heptagon Oracle")
+    api_key = st.text_input("OpenAI or Groq API key", type="password", help="Free instant key → https://console.groq.com/keys")
     if not api_key:
-        st.info("Paste your API key above to activate the heptagon")
+        st.info("Paste your API key above to activate")
         st.stop()
 
-# Choose LLM
+# Choose model
 if api_key.startswith("gsk_"):
     llm = ChatGroq(model="llama-3.3-70b-versatile", api_key=api_key, temperature=0.7)
 else:
     llm = ChatOpenAI(model="gpt-4o", api_key=api_key, temperature=0.7)
 
 # ==============================
-# SESSION STATE – SAFE START
+# SESSION STATE
 # ==============================
 if 'df' not in st.session_state:
     st.session_state.df = None
     st.session_state.coherence = None
     st.session_state.ratio = None
     st.session_state.topic = ""
-    st.session_state.verdict_text = "No verdict generated yet. Run a topic first."
+    st.session_state.verdict_text = "No reading yet – ask your question above."
+
+# ==============================
+# NATURAL LANGUAGE → HYPEN TOPIC (the magic)
+# ==============================
+def sentence_to_topic(sentence):
+    if not sentence.strip():
+        return ""
+    stop_words = {'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'you', 'your', 'yours',
+                  'he', 'him', 'his', 'she', 'her', 'hers', 'it', 'its', 'they', 'them', 'their',
+                  'what', 'which', 'who', 'whom', 'this', 'that', 'these', 'those', 'am', 'is', 'are',
+                  'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did',
+                  'will', 'would', 'shall', 'should', 'can', 'could', 'may', 'might', 'must',
+                  'the', 'a', 'an', 'and', 'but', 'if', 'or', 'because', 'as', 'of', 'at', 'by',
+                  'for', 'with', 'about', 'against', 'between', 'into', 'through', 'during',
+                  'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out',
+                  'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here',
+                  'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few',
+                  'more', 'most', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same',
+                  'so', 'than', 'too', 'very', 'just', 'now'}
+    # Find important words + numbers + South Africa etc.
+    words = re.findall(r'\b(?:\d{4}|59|60|202[56789]|rand|south\s*africa|suid-afrika|[a-zA-Z]{4,})\b', sentence.lower())
+    clean = [w.replace(' ', '').replace('southafrica', 'SouthAfrica').capitalize() for w in words if w not in stop_words]
+    return "–".join(clean) if clean else "Unknown"
 
 # ==============================
 # PERSONAL VERDICT ENGINE
 # ==============================
-def generate_personal_verdict(topic: str, coherence: float, ratio: float, grid_df):
+def generate_personal_verdict(topic, coherence, ratio, grid_df):
     try:
         dec_q = grid_df.loc["Decision Quantum", "Revelation"]
         blueprint = grid_df.loc["Blueprint / Soul", "Refinement"]
@@ -62,11 +86,10 @@ def generate_personal_verdict(topic: str, coherence: float, ratio: float, grid_d
         dec_q = blueprint = creator_rev = continuity = ""
 
     topic_lower = topic.lower()
-    has_family = any(word in topic_lower for word in ["family", "legacy", "children", "wife", "obligation", "duty"])
-    is_late_50s_sa = ("59" in topic_lower or "age" in topic_lower) and "south" in topic_lower
+    has_family = any(w in topic_lower for w in ["family", "legacy", "children", "wife", "obligation", "duty"])
+    late_50s_sa = ("59" in topic_lower or "60" in topic_lower) and "south" in topic_lower
 
     verdict = []
-
     if coherence >= 98.0:
         verdict.append("Green light – maximum soul alignment.")
     elif coherence >= 96.0:
@@ -76,36 +99,28 @@ def generate_personal_verdict(topic: str, coherence: float, ratio: float, grid_d
     else:
         verdict.append("Caution – deeper clearing still required.")
 
-    # South African late-50s self-employment pattern (earned from hundreds of real runs)
-    if ("self-employ" in topic_lower or "entrepreneur" in topic_lower) and has_family and is_late_50s_sa:
+    if ("self-employ" in topic_lower or "business" in topic_lower or "job" in topic_lower) and has_family and late_50s_sa:
         verdict.extend([
-            "At 59 in South Africa the family obligation is not a chain – it is rocket fuel.",
-            "Build the business so the family rides with you (consultancy that employs them, property/renewables that become the new asset base, advisory practice using your lifetime expertise).",
-            "Traditional employment has become a lid. Self-employment that carries the family forward is the only move that rectifies decades of duty and secures legacy beyond your lifetime."
+            "At 59–60 in South Africa the family responsibility is not a chain – it is rocket fuel.",
+            "Build the venture so the family rides with you (consultancy that employs them, property/renewables as family asset, advisory practice using your lifetime expertise).",
+            "Employment has become a lid. Self-employment that carries the family forward is the only move that rectifies decades of duty and secures legacy."
         ])
-    elif "self-employ" in topic_lower or "entrepreneur" in topic_lower:
-        verdict.append("Leap. The container of employment is complete for this lifetime.")
 
-    # Pull the strongest raw lines from the grid
     strong = [s for s in [dec_q, blueprint, creator_rev, continuity] if isinstance(s, str) and len(s) > 20]
     if strong:
-        verdict.append("\nKey transmissions from the grid:")
+        verdict.append("\nKey transmissions from the heptagon:")
         verdict.extend(["→ " + s.strip() for s in strong[:3]])
 
-    # Ratio lock messages
-    if abs(ratio - 3.741657) < 0.02:
+    if abs(ratio - 3.741657) < 0.03:
         verdict.append("√14 lock → this is archetypally exact for you right now.")
-    elif abs(ratio - 3.5) < 0.03:
-        verdict.append("7/2 lock → perfect half-heptad harmony.")
-
     return "\n\n".join(verdict)
 
 # ==============================
-# CORE ANALYSIS FUNCTION
+# CORE ANALYSIS
 # ==============================
 def analyse(topic):
     matrix = []
-    with st.spinner(f"Analysing **{topic}** across all 49 nodes…"):
+    with st.spinner(f"Running LOGOS analysis on **{topic}**…"):
         for row in matrix_questions:
             filled = []
             for q in row:
@@ -119,128 +134,93 @@ def analyse(topic):
     return np.array(matrix)
 
 # ==============================
-# APP UI
+# UI
 # ==============================
 
-st.set_page_config(page_title="LOGOS Heptagon Oracle", layout="wide")
-st.title("LOGOS Model Logic Laboratory")
-st.markdown("Enter any concept · Watch the 7×7 heptagon reveal its eternal pattern")
+st.set_page_config(page_title="LOGOS Oracle", layout="wide")
+st.title("LOGOS Heptagon Oracle")
+st.markdown("Ask any real question – write it normally. The oracle understands.")
 
-col1, col2 = st.columns([3,1])
-with col1:
-    #topic = st.text_input("Topic", placeholder="Love · Money · Death · Self-Employment–Family–59", label_visibility="collapsed")
-# ——— OLD (delete this) ———
-# topic = st.text_input("Topic", placeholder="Love · Money · Death · Self-Employment–Family–59", ...)
-
-# ——— NEW: natural language input + auto-hyphen conversion ———
+col1, col2 = st.columns([3, 1])
 with col1:
     natural_sentence = st.text_input(
-        "Your question (write normally – no hyphens needed)",
+        "Your question (just write naturally)",
         placeholder="Should I start my own business at 59 with family duties in South Africa?",
         label_visibility="collapsed"
     )
-
-# ——— Magic: convert sentence → perfect hyphen topic automatically ———
-import re
-def sentence_to_topic(sentence):
-    if not sentence.strip():
-        return ""
-    # Remove common fluff words
-    stop_words = {'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'you', 'your', 'yours', 
-                  'he', 'him', 'his', 'she', 'her', 'hers', 'it', 'its', 'they', 'them', 
-                  'their', 'what', 'which', 'who', 'whom', 'this', 'that', 'these', 
-                  'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 
-                  'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'shall', 
-                  'should', 'can', 'could', 'may', 'might', 'must', 'the', 'a', 'an', 
-                  'and', 'but', 'if', 'or', 'because', 'as', 'of', 'at', 'by', 'for', 
-                  'with', 'about', 'against', 'between', 'into', 'through', 'during', 
-                  'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down', 
-                  'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 
-                  'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 
-                  'all', 'any', 'both', 'each', 'few', 'more', 'most', 'some', 
-                  'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 
-                  'too', 'very', 'just', 'should', 'now'}
-    
-    # Extract numbers and important words
-    words = re.findall(r'\b(?:59|60|2026|2027|south ?africa|south-africa|r[0-9]+|[a-zA-Z]{4,})\b', sentence.lower())
-    clean = [w.replace(' ', '') for w in words if w not in stop_words]
-    # Capitalise first letter of each word
-    clean = [w.capitalize() for w in clean]
-    return "–".join(clean) if clean else "Unknown"
-
-# This is the topic the LLM actually sees
-topic = sentence_to_topic(natural_sentence)
-
-# Optional: show the user what the app understood (very helpful!)
-if natural_sentence.strip() and topic:
-    st.caption(f"Interpreted as: **{topic}**")
 with col2:
     st.markdown("<br>", unsafe_allow_html=True)
-    run = st.button("Run Analysis", type="primary", use_container_width=True)
+    run = st.button("Ask the Oracle", type="primary", use_container_width=True)
 
-# Sacred presets
-st.markdown("#### Quick presets:")
+# Show what the oracle understood
+topic = sentence_to_topic(natural_sentence)
+if natural_sentence.strip() and topic and topic != "Unknown":
+    st.caption(f"Interpreted as → **{topic}**")
+
+# Quick presets
+st.markdown("#### Or try one of these")
 cols = st.columns(6)
-presets = ["Love", "Money", "Death", "Free Will", "Forgiveness", "Entropy"]
-for i, name in enumerate(presets):
+for i, q in enumerate([
+    "Will my marriage survive the betrayal?",
+    "What does 2026 hold for South Africa?",
+    "Should I forgive my father?",
+    "Is my health scare the end?",
+    "Start business or stay in job at 59?",
+    "What is my soul’s true work?"
+]):
     with cols[i % 6]:
-        if st.button(name, use_container_width=True):
-            topic = name
+        if st.button(q.split("?")[0][:20] + "…", use_container_width=True):
+            natural_sentence = q
+            topic = sentence_to_topic(q)
             run = True
 
 # ==============================
-# RUN & PROCESS
+# RUN & DISPLAY
 # ==============================
-if run and topic:
+if run and topic and topic != "Unknown":
     result = analyse(topic)
     df = pd.DataFrame(result, index=layers, columns=planes)
 
-    # === FIXED & ACCURATE SCORING ===
-    total_chars = sum(len(str(cell)) for row in result for cell in row)
-    avg_cell_length = total_chars / 49
+    total_chars = sum(len(str(c)) for row in result for c in row)
+    avg_len = total_chars / 49
+    coherence = round(min(avg_len * 2.7, 99.99), 2)
+    ratio = round(avg_len / 10, 3)
 
-    coherence = round(min(avg_cell_length * 2.7, 99.99), 2)        # calibrated to real runs
-    ratio = round(avg_cell_length / 10, 3)                       # locks to ~3.74 when perfect
+    verdict = generate_personal_verdict(topic, coherence, ratio, df)
+    verdict_text = f"LOGOS PERSONAL VERDICT\n{'='*60}\nTopic: {topic}\nQuestion: {natural_sentence}\nDate: {datetime.datetime.now():%Y-%m-%d %H:%M}\nCoherence: {coherence}% │ Ratio: {ratio}/1.000\n\n{verdict}"
 
-    # Generate verdict text
-    verdict_text = generate_personal_verdict(topic, coherence, ratio, df)
-    verdict_text = f"LOGOS PERSONAL VERDICT\n{'='*60}\nTopic: {topic}\nDate: {datetime.datetime.now():%Y-%m-%d %H:%M}\nCoherence: {coherence}% | Ratio: {ratio}/1.000\n\n{verdict_text}"
-
-    # Save everything
     st.session_state.df = df
     st.session_state.coherence = coherence
     st.session_state.ratio = ratio
     st.session_state.topic = topic
+    st.session_state.natural_sentence = natural_sentence
     st.session_state.verdict_text = verdict_text
     st.rerun()
 
 # ==============================
-# DISPLAY RESULTS
+# SHOW RESULTS
 # ==============================
 if st.session_state.df is not None:
-    st.success(f"Complete analysis of **{st.session_state.topic}**")
+    st.success(f"Oracle has spoken on **{st.session_state.topic}**")
 
-    st.markdown(f"**Topic:** {st.session_state.topic}")
-    st.markdown(f"**Resonance Coherence:** {st.session_state.coherence:.2f} %  |  **Heptagonal Ratio:** {st.session_state.ratio:.3f}/1.000")
+    st.markdown(f"**Your question:** {st.session_state.natural_sentence}")
+    st.markdown(f"**Resonance Coherence:** {st.session_state.coherence:.2f}% │ **Heptagonal Ratio:** {st.session_state.ratio:.3f}/1.000")
 
     if st.session_state.coherence >= 92.0:
         st.subheader("PERSONAL VERDICT")
-        st.success(st.session_state.verdict_text.split("\n\n", 1)[1])  # clean look
+        st.success(st.session_state.verdict_text.split("\n\n", 1)[1])
         st.markdown("---")
 
     st.dataframe(st.session_state.df.style.set_properties(**{'text-align': 'left'}), use_container_width=True)
 
-    # === DUAL DOWNLOAD ===
-    col_d1, col_d2 = st.columns(2)
-    with col_d1:
+    col1, col2 = st.columns(2)
+    with col1:
         csv = st.session_state.df.to_csv().encode()
-        st.download_button("Download Grid as CSV", csv, f"LOGOS_{st.session_state.topic}.csv", "text/csv")
-
-    with col_d2:
-        verdict_data = st.session_state.verdict_text.encode()
-        st.download_button("Download Personal Verdict as TXT", verdict_data, f"VERDICT_{st.session_state.topic}.txt", "text/plain")
-
+        st.download_button("Download Full Grid (CSV)", csv, f"LOGOS_{st.session_state.topic}.csv", "text/csv")
+    with col2:
+        st.download_button("Download Personal Verdict (TXT)", st.session_state.verdict_text.encode(),
+                           f"VERDICT_{st.session_state.topic}.txt", "text/plain")
 else:
-    st.info("Enter a topic and click **Run Analysis** to begin.")
-    st.markdown("Try: `Self-Employment–FamilyObligation–SouthAfrica–59`")
+    st.info("Ask any real question above – just write it like you would to a wise friend.")
+
 
