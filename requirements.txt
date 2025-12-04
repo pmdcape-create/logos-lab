@@ -10,3 +10,4 @@ langchain-groq
 openai
 groq
 faiss-cpu
+reportlab
