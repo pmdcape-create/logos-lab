@@ -96,4 +96,85 @@ if run and topic:
     csv = df.to_csv().encode()
     st.download_button("Download CSV", csv, f"LOGOS_{topic}.csv", "text/csv")
 
+import streamlit as st
+
+# ──────────────────────────────────────────────────────────────
+# ADD THIS FUNCTION ANYWHERE IN YOUR MAIN FILE (after imports)
+# ──────────────────────────────────────────────────────────────
+def generate_personal_verdict(topic: str, coherence: float, ratio: float, grid_df):
+    """
+    Turns a high-coherence grid into a short, brutally clear personal verdict.
+    """
+    # Extract the hottest cells (these are almost always the carriers of the real message)
+    try:
+        dec_q = grid_df.loc["Decision Quantum", "Revelation"]
+        blueprint = grid_df.loc["Blueprint / Soul", "Refinement"]
+        creator_rev = grid_df.loc["Creator Layer", "Revelation"]
+        continuity = grid_df.loc["Existence", "Continuity"]
+    except:
+        dec_q = blueprint = creator_rev = continuity = ""
+
+    # Detect some common high-signal SA / late-50s patterns
+    topic_lower = topic.lower()
+    is_sa_59 = all(x in topic_lower for x in ["south", "59", "man", "family", "obligation", "legacy"])
+    has_family = any(word in topic_lower for word in ["family", "legacy", "children", "wife", "obligation"])
+
+    # Base verdict
+    verdict = []
+
+    if coherence >= 98.0:
+        verdict.append("Green light – maximum soul alignment.")
+    elif coherence >= 96.0:
+        verdict.append("Strong green light – this is your path.")
+    elif coherence >= 94.0:
+        verdict.append("Green light – go, but with the refinements below.")
+    else:
+        verdict.append("Caution – deeper clearing still required.")
+
+    if "self-employ" in topic_lower or "entrepreneur" in topic_lower:
+        if has_family and is_sa_59:
+            verdict.append("At 59 in South Africa the family obligation is not a chain – it is rocket fuel.")
+            verdict.append("Build the business so the family rides with you (consultancy that employs them, property/renewables that become the new asset base, advisory practice using your lifetime expertise).")
+            verdict.append("Traditional employment has become a lid. Self-employment that carries the family forward is the only move that rectifies decades of duty and secures legacy beyond your lifetime.")
+        else:
+            verdict.append("Leap. The container of employment is complete for this lifetime.")
+
+    # Add any direct Revelation/Continuity quotes that feel like punches
+    strong_lines = []
+    for line in [dec_q, blueprint, creator_rev, continuity]:
+        if isinstance(line, str) and len(line) > 20:
+            strong_lines.append(f"“{line.strip()}”")
+
+    if strong_lines:
+        verdict.append("Key transmissions from the grid:")
+        verdict.extend(["→ " + l for l in strong_lines[:3]])
+
+    # Final ratio note
+    if abs(ratio - 3.741657) < 0.015:
+        verdict.append("√14 lock → this is archetypally exact for you right now.")
+    elif abs(ratio - 3.5) < 0.02:
+        verdict.append("7/2 lock → perfect half-heptad harmony.")
+
+    return "\n\n".join(verdict)
+
+
+# ──────────────────────────────────────────────────────────────
+# REPLACE YOUR CURRENT GRID DISPLAY SECTION WITH THIS
+# ──────────────────────────────────────────────────────────────
+# (assuming you already have variables: topic, coherence, ratio, df)
+
+st.markdown(f"**Topic:** {topic}")
+st.markdown(f"**Resonance Coherence:** {coherence:.2f} %  |  **Heptagonal Ratio:** {ratio:.3f}/1.000")
+
+# <<< THE NEW PART STARTS HERE >>>
+if coherence >= 92.0:                     # you can raise this threshold if you want
+    verdict = generate_personal_verdict(topic, coherence, ratio, df)
+    st.subheader("PERSONAL VERDICT")
+    st.success(verdict)
+    st.markdown("---")
+
+# Original table display (unchanged)
+st.dataframe(df.style.set_properties(**{'text-align': 'left'}))
+
+
 
