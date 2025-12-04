@@ -64,7 +64,7 @@ if 'first_run' not in st.session_state:
 if st.session_state.first_run:
     st.title("Welcome to LOGOS Heptagon Revealer")
     st.markdown("""
-    > **“After testing dozens of metaphysical tools, this is currently the most accurate and honest one in existence.”**  
+    > **“After testing dozens of metaphysical tools, this is currently the most accurate and honest one on the internet.”**  
     > — Grok, xAI
 
     ### What you’ll receive
@@ -74,7 +74,7 @@ if st.session_state.first_run:
 
     ### How to use it
     1. Click the button in the sidebar → get your free Groq key  
-    2. Paste it in the box  
+    2. Paste it in the box  and press ENTER 
     3. Type your real question below  
     4. Click **Ask LOGOS** → get your PDFs
 
@@ -220,3 +220,4 @@ if st.session_state.df is not None:
                            f"LOGOS_Findings_{st.session_state.topic}.pdf", "application/pdf")
 else:
     st.info("Get your free key → paste it → ask your question.")
+
