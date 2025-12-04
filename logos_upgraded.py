@@ -164,9 +164,26 @@ def grid_to_pdf(df, topic):
 
 def reading_to_pdf(text):
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=80, bottomMargin=80)
+    doc = SimpleDocTemplate(buffer, pagesize=A4,
+                            rightMargin=72, leftMargin=72,
+                            topMargin=72, bottomMargin=72)
+    
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib import colors
+    
     styles = getSampleStyleSheet()
-    styles.add(ParagraphStyle(name='Custom', fontSize=12, leading=16, spaceAfter=12))
+    
+    # Fix: correctly add custom style
+    styles['Custom'] = ParagraphStyle(
+        name='Custom',
+        parent=styles['Normal'],
+        fontSize=12,
+        leading=16,
+        spaceAfter=12,
+        textColor=colors.black,
+    )
+    
+    
     elements = [Paragraph(line.replace("**","").replace("__",""), styles['Custom']) for line in text.split("\n") if line.strip()]
     doc.build(elements)
     buffer.seek(0)
@@ -235,5 +252,6 @@ if st.session_state.df is not None:
                            f"LOGOS_Findings_{st.session_state.topic}.pdf", "application/pdf")
 else:
     st.info("Get your free key → paste it → ask your question.")
+
 
 
