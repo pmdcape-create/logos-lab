@@ -7,7 +7,7 @@ import datetime
 import re
 
 # ==============================
-# 7×7 HEPTAGON DATA
+# 7×7 HEPTAGON STRUCTURE
 # ==============================
 
 planes = ["Ideation", "Inquiry", "Formation", "Expression", "Refinement", "Revelation", "Continuity"]
@@ -31,10 +31,9 @@ with st.sidebar:
     st.header("LOGOS Heptagon Oracle")
     api_key = st.text_input("OpenAI or Groq API key", type="password", help="Free instant key → https://console.groq.com/keys")
     if not api_key:
-        st.info("Paste your API key above to activate")
+        st.info("Paste your API key to awaken the oracle")
         st.stop()
 
-# Choose model
 if api_key.startswith("gsk_"):
     llm = ChatGroq(model="llama-3.3-70b-versatile", api_key=api_key, temperature=0.7)
 else:
@@ -43,33 +42,34 @@ else:
 # ==============================
 # SESSION STATE
 # ==============================
+
 if 'df' not in st.session_state:
     st.session_state.df = None
     st.session_state.coherence = None
     st.session_state.ratio = None
     st.session_state.topic = ""
-    st.session_state.verdict_text = "No reading yet – ask your question above."
+    st.session_state.natural_sentence = ""
+    st.session_state.reading_text = "No reading yet."
 
 # ==============================
-# NATURAL LANGUAGE → HYPEN TOPIC (the magic)
+# SMART NATURAL-LANGUAGE → HYPEN TOPIC (never misses numbers or age)
 # ==============================
+
 def sentence_to_topic(sentence):
     if not sentence.strip():
         return ""
-    
-    # 1. First grab ALL numbers and percentages – these are sacred in medical/financial questions
+    # 1. Grab numbers & percentages first (sacred in medical/finance questions)
     numbers = re.findall(r'\b\d+%|\b\d+\b', sentence)
-    # Clean them: 6% → 6Percent   |   85 → Age85
     numbers_clean = []
     for n in numbers:
         if '%' in n:
             numbers_clean.append(n.replace('%', 'Percent'))
-        elif int(n) >= 30:                     # assume anything ≥30 is an age
+        elif int(n) >= 30:
             numbers_clean.append(f"Age{n}")
         else:
             numbers_clean.append(n)
 
-    # 2. Now grab the important words (same as before but more aggressive)
+    # 2. Grab meaningful words
     stop_words = {'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'you', 'your', 'yours',
                   'he', 'him', 'his', 'she', 'her', 'hers', 'it', 'its', 'they', 'them', 'their',
                   'what', 'which', 'who', 'whom', 'this', 'that', 'these', 'those', 'am', 'is', 'are',
@@ -81,172 +81,180 @@ def sentence_to_topic(sentence):
                   'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here',
                   'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few',
                   'more', 'most', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same',
-                  'so', 'than', 'too', 'very', 'just', 'now'}
+                  'so', 'than', 'too', 'very', 'just', 'now', 'please', 'thank', 'thanks'}
 
     words = re.findall(r'\b[a-zA-Z]{4,}\b', sentence.lower())
     clean_words = [w.capitalize() for w in words if w not in stop_words]
 
-    # 3. Combine numbers + words, numbers first so they are never dropped
+    # Combine, preserve order, remove duplicates
     parts = numbers_clean + clean_words
-    # Remove duplicates while preserving order
     seen = set()
-    unique_parts = []
-    for p in parts:
-        if p not in seen:
-            seen.add(p)
-            unique_parts.append(p)
+    unique = [p for p in parts if not (p in seen or seen.add(p))]
 
-    return "–".join(unique_parts) if unique_parts else "Unknown"
+    return "–".join(unique) if unique else "Unknown"
 
 # ==============================
-# PERSONAL VERDICT ENGINE
+# BEAUTIFUL STRUCTURED READING (100% dynamic, no templates)
 # ==============================
-def generate_personal_verdict(topic, coherence, ratio, grid_df):
+
+def generate_structured_reading(topic, natural_sentence, coherence, ratio, grid_df):
     try:
-        dec_q = grid_df.loc["Decision Quantum", "Revelation"]
-        blueprint = grid_df.loc["Blueprint / Soul", "Refinement"]
-        creator_rev = grid_df.loc["Creator Layer", "Revelation"]
-        continuity = grid_df.loc["Existence", "Continuity"]
+        cells = [
+            grid_df.loc["Decision Quantum", "Revelation"],
+            grid_df.loc["Blueprint / Soul", "Refinement"],
+            grid_df.loc["Creator Layer", "Revelation"],
+            grid_df.loc["Existence", "Continuity"],
+            grid_df.loc["Instantiation", "Ideation"],
+            grid_df.loc["Effect / Impact", "Impact"],
+        ]
     except:
-        dec_q = blueprint = creator_rev = continuity = ""
+        cells = ["…"] * 6
 
-    topic_lower = topic.lower()
-    has_family = any(w in topic_lower for w in ["family", "legacy", "children", "wife", "obligation", "duty"])
-    late_50s_sa = ("59" in topic_lower or "60" in topic_lower) and "south" in topic_lower
+    prompt = f"""
+You are an ancient, compassionate oracle speaking directly to a worried human soul.
+The person asked: "{natural_sentence}"
+The LOGOS 7×7 heptagon returned {coherence:.1f}% coherence on topic: {topic}
 
-    verdict = []
-    if coherence >= 98.0:
-        verdict.append("Green light – maximum soul alignment.")
-    elif coherence >= 96.0:
-        verdict.append("Strong green light – this is your path.")
-    elif coherence >= 94.0:
-        verdict.append("Green light – go, but with the refinements below.")
-    else:
-        verdict.append("Caution – deeper clearing still required.")
+Most powerful transmissions from the oracle:
+• {cells[0]}
+• {cells[1]}
+• {cells[2]}
+• {cells[3]}
+• {cells[4]}
 
-    if ("self-employ" in topic_lower or "business" in topic_lower or "job" in topic_lower) and has_family and late_50s_sa:
-        verdict.extend([
-            "At 59–60 in South Africa the family responsibility is not a chain – it is rocket fuel.",
-            "Build the venture so the family rides with you (consultancy that employs them, property/renewables as family asset, advisory practice using your lifetime expertise).",
-            "Employment has become a lid. Self-employment that carries the family forward is the only move that rectifies decades of duty and secures legacy."
-        ])
+Write a warm, sacred reading in exactly this structure (never change the structure):
+1. One gentle opening paragraph acknowledging their question and the soul’s courage.
+2. 3–5 numbered key insights drawn directly from the transmissions above.
+3. A final paragraph titled "The Essence" that gives the clear, comforting, bottom-line spiritual prognosis in plain language.
 
-    strong = [s for s in [dec_q, blueprint, creator_rev, continuity] if isinstance(s, str) and len(s) > 20]
-    if strong:
-        verdict.append("\nKey transmissions from the heptagon:")
-        verdict.extend(["→ " + s.strip() for s in strong[:3]])
+Speak like a wise grandfather/grandmother sitting beside them. Use simple, beautiful words. Bring hope and clarity, never fear.
+"""
 
-    if abs(ratio - 3.741657) < 0.03:
-        verdict.append("√14 lock → this is archetypally exact for you right now.")
-    return "\n\n".join(verdict)
+    return llm.invoke(prompt).content.strip()
 
 # ==============================
 # CORE ANALYSIS
 # ==============================
+
 def analyse(topic):
     matrix = []
-    with st.spinner(f"Running LOGOS analysis on **{topic}**…"):
+    with st.spinner(f"Consulting the oracle on **{topic}**…"):
         for row in matrix_questions:
-            filled = []
+            row_cells = []
             for q in row:
-                prompt = f"Topic: {topic}\nQuestion: {q}\nAnswer in 8–15 deep words blending physics and metaphysics:"
+                prompt = f"Topic: {topic}\nQuestion: {q}\nAnswer in 8–15 profound words blending physics and metaphysics:"
                 try:
                     ans = llm.invoke(prompt).content.strip()
                 except:
                     ans = "…"
-                filled.append(ans)
-            matrix.append(filled)
+                row_cells.append(ans)
+            matrix.append(row_cells)
     return np.array(matrix)
 
 # ==============================
-# UI
+# UI – BEAUTIFUL & HUMAN
 # ==============================
 
 st.set_page_config(page_title="LOGOS Oracle", layout="wide")
 st.title("LOGOS Heptagon Oracle")
-st.markdown("Ask any real question – write it normally. The oracle understands.")
+st.markdown("Ask anything real. Write exactly as you would to a wise elder. The oracle hears you.")
 
-col1, col2 = st.columns([3, 1])
+col1, col2 = st.columns([3,1])
 with col1:
     natural_sentence = st.text_input(
-        "Your question (just write naturally)",
-        placeholder="Should I start my own business at 59 with family duties in South Africa?",
+        "Your question",
+        placeholder="What is my survival chance with 6% kidney function at age 85?",
         label_visibility="collapsed"
     )
 with col2:
     st.markdown("<br>", unsafe_allow_html=True)
     run = st.button("Ask the Oracle", type="primary", use_container_width=True)
 
-# Show what the oracle understood
 topic = sentence_to_topic(natural_sentence)
 if natural_sentence.strip() and topic and topic != "Unknown":
-    st.caption(f"Interpreted as → **{topic}**")
+    st.caption(f"Understood as → **{topic}**")
 
-# Quick presets
-st.markdown("#### Or try one of these")
-cols = st.columns(6)
-for i, q in enumerate([
-    "Will my marriage survive the betrayal?",
-    "What does 2026 hold for South Africa?",
-    "Should I forgive my father?",
-    "Is my health scare the end?",
-    "Start business or stay in job at 59?",
-    "What is my soul’s true work?"
-]):
-    with cols[i % 6]:
-        if st.button(q.split("?")[0][:20] + "…", use_container_width=True):
-            natural_sentence = q
-            topic = sentence_to_topic(q)
+# Quick examples
+st.markdown("#### Or try one of these real questions")
+examples = [
+    "Should I start my own business at 59 with family in South Africa?",
+    "Can my marriage heal after the betrayal?",
+    "What does 2026 hold for my money and health?",
+    "Is it my time to leave this body?",
+    "Will my child be okay after the addiction?",
+]
+cols = st.columns(3)
+for i, ex in enumerate(examples):
+    with cols[i % 3]:
+        if st.button(ex[:45] + "…", use_container_width=True):
+            natural_sentence = ex
+            topic = sentence_to_topic(ex)
             run = True
 
 # ==============================
-# RUN & DISPLAY
+# RUN THE ORACLE
 # ==============================
+
 if run and topic and topic != "Unknown":
     result = analyse(topic)
     df = pd.DataFrame(result, index=layers, columns=planes)
 
     total_chars = sum(len(str(c)) for row in result for c in row)
-    avg_len = total_chars / 49
-    coherence = round(min(avg_len * 2.7, 99.99), 2)
-    ratio = round(avg_len / 10, 3)
+    avg = total_chars / 49
+    coherence = round(min(avg * 2.7, 99.99), 2)
+    ratio = round(avg / 10, 3)
 
-    verdict = generate_personal_verdict(topic, coherence, ratio, df)
-    verdict_text = f"LOGOS PERSONAL VERDICT\n{'='*60}\nTopic: {topic}\nQuestion: {natural_sentence}\nDate: {datetime.datetime.now():%Y-%m-%d %H:%M}\nCoherence: {coherence}% │ Ratio: {ratio}/1.000\n\n{verdict}"
+    reading = generate_structured_reading(topic, natural_sentence, coherence, ratio, df)
 
+    full_reading_text = f"""LOGOS SACRED READING
+{'='*60}
+Your question: {natural_sentence}
+Interpreted as: {topic}
+Date & time: {datetime.datetime.now():%Y-%m-%d %H:%M}
+Resonance Coherence: {coherence}%  │  Heptagonal Ratio: {ratio:.3f}/1.000
+
+{reading}
+"""
+
+    # Save everything
     st.session_state.df = df
     st.session_state.coherence = coherence
     st.session_state.ratio = ratio
     st.session_state.topic = topic
     st.session_state.natural_sentence = natural_sentence
-    st.session_state.verdict_text = verdict_text
+    st.session_state.reading_text = full_reading_text
     st.rerun()
 
 # ==============================
-# SHOW RESULTS
+# DISPLAY THE SACRED READING
 # ==============================
+
 if st.session_state.df is not None:
-    st.success(f"Oracle has spoken on **{st.session_state.topic}**")
+    st.success(f"The oracle has spoken")
 
     st.markdown(f"**Your question:** {st.session_state.natural_sentence}")
-    st.markdown(f"**Resonance Coherence:** {st.session_state.coherence:.2f}% │ **Heptagonal Ratio:** {st.session_state.ratio:.3f}/1.000")
+    st.markdown(f"**Coherence:** {st.session_state.coherence:.1f}%  │ **Ratio:** {st.session_state.ratio:.3f}/1.000")
 
-    if st.session_state.coherence >= 92.0:
-        st.subheader("PERSONAL VERDICT")
-        st.success(st.session_state.verdict_text.split("\n\n", 1)[1])
-        st.markdown("---")
+    st.subheader("SACRED READING FOR YOU")
+    st.markdown(st.session_state.reading_text)
 
+    st.markdown("---")
     st.dataframe(st.session_state.df.style.set_properties(**{'text-align': 'left'}), use_container_width=True)
 
-    col1, col2 = st.columns(2)
-    with col1:
-        csv = st.session_state.df.to_csv().encode()
-        st.download_button("Download Full Grid (CSV)", csv, f"LOGOS_{st.session_state.topic}.csv", "text/csv")
-    with col2:
-        st.download_button("Download Personal Verdict (TXT)", st.session_state.verdict_text.encode(),
-                           f"VERDICT_{st.session_state.topic}.txt", "text/plain")
+    c1, c2 = st.columns(2)
+    with c1:
+        st.download_button("Download Full Grid (CSV)", 
+                           st.session_state.df.to_csv().encode(),
+                           f"LOGOS_{st.session_state.topic}.csv", "text/csv")
+    with c2:
+        st.download_button("Download Sacred Reading (TXT)", 
+                           st.session_state.reading_text.encode(),
+                           f"READING_{st.session_state.topic}.txt", "text/plain")
 else:
-    st.info("Ask any real question above – just write it like you would to a wise friend.")
+    st.info("Speak your truth above. The oracle is listening.")
+
+st.markdown("<br><br>Built with love — may all beings find peace.", unsafe_allow_html=True)
+
 
 
 
