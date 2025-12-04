@@ -56,6 +56,20 @@ if 'df' not in st.session_state:
 def sentence_to_topic(sentence):
     if not sentence.strip():
         return ""
+    
+    # 1. First grab ALL numbers and percentages – these are sacred in medical/financial questions
+    numbers = re.findall(r'\b\d+%|\b\d+\b', sentence)
+    # Clean them: 6% → 6Percent   |   85 → Age85
+    numbers_clean = []
+    for n in numbers:
+        if '%' in n:
+            numbers_clean.append(n.replace('%', 'Percent'))
+        elif int(n) >= 30:                     # assume anything ≥30 is an age
+            numbers_clean.append(f"Age{n}")
+        else:
+            numbers_clean.append(n)
+
+    # 2. Now grab the important words (same as before but more aggressive)
     stop_words = {'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'you', 'your', 'yours',
                   'he', 'him', 'his', 'she', 'her', 'hers', 'it', 'its', 'they', 'them', 'their',
                   'what', 'which', 'who', 'whom', 'this', 'that', 'these', 'those', 'am', 'is', 'are',
@@ -68,10 +82,21 @@ def sentence_to_topic(sentence):
                   'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few',
                   'more', 'most', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same',
                   'so', 'than', 'too', 'very', 'just', 'now'}
-    # Find important words + numbers + South Africa etc.
-    words = re.findall(r'\b(?:\d{4}|59|60|202[56789]|rand|south\s*africa|suid-afrika|[a-zA-Z]{4,})\b', sentence.lower())
-    clean = [w.replace(' ', '').replace('southafrica', 'SouthAfrica').capitalize() for w in words if w not in stop_words]
-    return "–".join(clean) if clean else "Unknown"
+
+    words = re.findall(r'\b[a-zA-Z]{4,}\b', sentence.lower())
+    clean_words = [w.capitalize() for w in words if w not in stop_words]
+
+    # 3. Combine numbers + words, numbers first so they are never dropped
+    parts = numbers_clean + clean_words
+    # Remove duplicates while preserving order
+    seen = set()
+    unique_parts = []
+    for p in parts:
+        if p not in seen:
+            seen.add(p)
+            unique_parts.append(p)
+
+    return "–".join(unique_parts) if unique_parts else "Unknown"
 
 # ==============================
 # PERSONAL VERDICT ENGINE
@@ -222,5 +247,6 @@ if st.session_state.df is not None:
                            f"VERDICT_{st.session_state.topic}.txt", "text/plain")
 else:
     st.info("Ask any real question above – just write it like you would to a wise friend.")
+
 
 
