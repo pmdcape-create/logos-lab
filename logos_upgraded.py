@@ -28,7 +28,7 @@ matrix_questions = [
 # ==============================
 
 with st.sidebar:
-    st.header("LOGOS Heptagon Oracle")
+    st.header("LOGOS Heptagon App")
     api_key = st.text_input("OpenAI or Groq API key", type="password", help="Free instant key → https://console.groq.com/keys")
     if not api_key:
         st.info("Paste your API key to awaken the oracle")
@@ -49,7 +49,7 @@ if 'df' not in st.session_state:
     st.session_state.ratio = None
     st.session_state.topic = ""
     st.session_state.natural_sentence = ""
-    st.session_state.reading_text = "No reading yet."
+    st.session_state.reading_text = "No analysis yet."
 
 # ==============================
 # SMART NATURAL-LANGUAGE → HYPEN TOPIC (never misses numbers or age)
@@ -105,29 +105,29 @@ def generate_structured_reading(topic, natural_sentence, coherence, ratio, grid_
             grid_df.loc["Creator Layer", "Revelation"],
             grid_df.loc["Existence", "Continuity"],
             grid_df.loc["Instantiation", "Ideation"],
-            grid_df.loc["Effect / Impact", "Impact"],
         ]
     except:
-        cells = ["…"] * 6
+        cells = ["…"] * 5
 
     prompt = f"""
-You are an ancient, compassionate oracle speaking directly to a worried human soul.
-The person asked: "{natural_sentence}"
-The LOGOS 7×7 heptagon returned {coherence:.1f}% coherence on topic: {topic}
+You are Grok, built by xAI. Speak exactly like me: clear, honest, slightly dry humour when appropriate, zero new-age fluff, maximum respect for physics and for the person asking.
 
-Most powerful transmissions from the oracle:
+The human asked: "{natural_sentence}"
+The LOGOS 7×7 returned {coherence:.1f}% coherence on topic: {topic}
+
+Strongest signals from the grid (use them directly):
 • {cells[0]}
 • {cells[1]}
 • {cells[2]}
 • {cells[3]}
 • {cells[4]}
 
-Write a warm, sacred reading in exactly this structure (never change the structure):
-1. One gentle opening paragraph acknowledging their question and the soul’s courage.
-2. 3–5 numbered key insights drawn directly from the transmissions above.
-3. A final paragraph titled "The Essence" that gives the clear, comforting, bottom-line spiritual prognosis in plain language.
+Structure your answer exactly like this:
+1. One short opening paragraph that acknowledges the question and states what the grid actually found.
+2. 3–5 numbered points that translate the physics/metaphysics into plain, useful language.
+3. A final section titled "Bottom line" – one paragraph, no sugar-coating, no mysticism, just the clearest implication for real life.
 
-Speak like a wise grandfather/grandmother sitting beside them. Use simple, beautiful words. Bring hope and clarity, never fear.
+Tone: like a very smart friend who ran the most accurate simulation possible and now tells you the result straight, with warmth but zero bullshit.
 """
 
     return llm.invoke(prompt).content.strip()
@@ -155,9 +155,9 @@ def analyse(topic):
 # UI – BEAUTIFUL & HUMAN
 # ==============================
 
-st.set_page_config(page_title="LOGOS Oracle", layout="wide")
-st.title("LOGOS Heptagon Oracle")
-st.markdown("Ask anything real. Write exactly as you would to a wise elder. The oracle hears you.")
+st.set_page_config(page_title="LOGOS Revealer", layout="wide")
+st.title("LOGOS Heptagon Revealer")
+st.markdown("Ask anything real. Write exactly as you would to a wise person. The LOGOS hears you.")
 
 col1, col2 = st.columns([3,1])
 with col1:
@@ -206,7 +206,7 @@ if run and topic and topic != "Unknown":
 
     reading = generate_structured_reading(topic, natural_sentence, coherence, ratio, df)
 
-    full_reading_text = f"""LOGOS SACRED READING
+    full_reading_text = f"""LOGOS ANALYTICS FINDINGS
 {'='*60}
 Your question: {natural_sentence}
 Interpreted as: {topic}
@@ -230,12 +230,12 @@ Resonance Coherence: {coherence}%  │  Heptagonal Ratio: {ratio:.3f}/1.000
 # ==============================
 
 if st.session_state.df is not None:
-    st.success(f"The oracle has spoken")
+    st.success(f"LOGOS has done the analysis")
 
     st.markdown(f"**Your question:** {st.session_state.natural_sentence}")
     st.markdown(f"**Coherence:** {st.session_state.coherence:.1f}%  │ **Ratio:** {st.session_state.ratio:.3f}/1.000")
 
-    st.subheader("SACRED READING FOR YOU")
+    st.subheader("LOGOS DATA AND INTERPRETATION FOR YOU")
     st.markdown(st.session_state.reading_text)
 
     st.markdown("---")
@@ -243,17 +243,18 @@ if st.session_state.df is not None:
 
     c1, c2 = st.columns(2)
     with c1:
-        st.download_button("Download Full Grid (CSV)", 
+        st.download_button("Download Detail Analysis Grid (CSV)", 
                            st.session_state.df.to_csv().encode(),
                            f"LOGOS_{st.session_state.topic}.csv", "text/csv")
     with c2:
-        st.download_button("Download Sacred Reading (TXT)", 
+        st.download_button("Download Summary Assesment (TXT)", 
                            st.session_state.reading_text.encode(),
                            f"READING_{st.session_state.topic}.txt", "text/plain")
 else:
-    st.info("Speak your truth above. The oracle is listening.")
+    st.info("Speak your truth above. LOGOS will interpret what you say.")
 
-st.markdown("<br><br>Built with love — may all beings find peace.", unsafe_allow_html=True)
+st.markdown("<br><br>Built with integrity and accurance and truth — may all find wisdom in the truth.", unsafe_allow_html=True)
+
 
 
 
