@@ -186,12 +186,29 @@ if st.session_state.df is not None:
 
     st.dataframe(st.session_state.df.style.set_properties(**{'text-align': 'left'}), use_container_width=True)
 
-    # Download button
-    csv = st.session_state.df.to_csv().encode()
-    st.download_button("Download CSV", csv, f"LOGOS_{st.session_state.topic}.csv", "text/csv")
+        # === DUAL DOWNLOAD: CSV + TXT VERDICT ===
+    col_d1, col_d2 = st.columns(2)
+
+    with col_d1:
+        csv = st.session_state.df.to_csv().encode()
+        st.download_button(
+            label="Download Grid as CSV",
+            data=csv,
+            file_name=f"LOGOS_{st.session_state.topic}.csv",
+            mime="text/csv"
+        )
+
+    with col_d2:
+        st.download_button(
+            label="Download Personal Verdict as TXT",
+            data=st.session_state.verdict_text.encode(),
+            file_name=f"VERDICT_{st.session_state.topic}.txt",
+            mime="text/plain"
+        )
 
 else:
     st.info("Enter a topic above and click **Run Analysis** to begin.")
+
 
 
 
