@@ -67,7 +67,7 @@ if st.session_state.first_run:
 
     ### How to use it (3 simple steps)
     1. Paste a free Groq API key in the sidebar (takes 10 seconds → link above)  
-    2. Type your real question below (e.g. “Should I leave my job at 59 with family in South Africa?”)  
+    2. Type your real question below (e.g. “Should I leave South Africa? or What is the meaning of life or Explain gravity”)  
     3. Click **Ask LOGOS** → wait ~45 seconds → download your two PDFs
 
     That’s it.  
@@ -171,7 +171,7 @@ st.markdown("Ask anything real. LOGOS hears you.")
 
 col1, col2 = st.columns([3,1])
 with col1:
-    natural_sentence = st.text_input("Your question", placeholder="Should I start my own business at 59 with family duties?", label_visibility="collapsed")
+    natural_sentence = st.text_input("Your question", placeholder="what is the meaning of life?", label_visibility="collapsed")
 with col2:
     st.markdown("<br>", unsafe_allow_html=True)
     run = st.button("Ask LOGOS", type="primary", use_container_width=True)
@@ -226,4 +226,5 @@ if st.session_state.df is not None:
                            f"LOGOS_Findings_{st.session_state.topic}.pdf", "application/pdf")
 else:
     st.info("Type your real question above and click **Ask LOGOS**.")
+
 
