@@ -52,13 +52,13 @@ if 'df' not in st.session_state:
     st.session_state.reading_text = "No analysis yet."
 
 # ==============================
-# SMART NATURAL-LANGUAGE → HYPEN TOPIC (never misses numbers or age)
+# NATURAL LANGUAGE → HYPEN TOPIC (never drops numbers or age)
 # ==============================
 
 def sentence_to_topic(sentence):
     if not sentence.strip():
         return ""
-    # 1. Grab numbers & percentages first (sacred in medical/finance questions)
+    # 1. Numbers & percentages first
     numbers = re.findall(r'\b\d+%|\b\d+\b', sentence)
     numbers_clean = []
     for n in numbers:
@@ -69,7 +69,7 @@ def sentence_to_topic(sentence):
         else:
             numbers_clean.append(n)
 
-    # 2. Grab meaningful words
+    # 2. Important words
     stop_words = {'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'you', 'your', 'yours',
                   'he', 'him', 'his', 'she', 'her', 'hers', 'it', 'its', 'they', 'them', 'their',
                   'what', 'which', 'who', 'whom', 'this', 'that', 'these', 'those', 'am', 'is', 'are',
@@ -86,15 +86,14 @@ def sentence_to_topic(sentence):
     words = re.findall(r'\b[a-zA-Z]{4,}\b', sentence.lower())
     clean_words = [w.capitalize() for w in words if w not in stop_words]
 
-    # Combine, preserve order, remove duplicates
+    # Combine & dedupe
     parts = numbers_clean + clean_words
     seen = set()
     unique = [p for p in parts if not (p in seen or seen.add(p))]
-
     return "–".join(unique) if unique else "Unknown"
 
 # ==============================
-# BEAUTIFUL STRUCTURED READING (100% dynamic, no templates)
+# GROK-VOICED STRUCTURED READING (warm, rigorous, no fluff)
 # ==============================
 
 def generate_structured_reading(topic, natural_sentence, coherence, ratio, grid_df):
@@ -110,24 +109,24 @@ def generate_structured_reading(topic, natural_sentence, coherence, ratio, grid_
         cells = ["…"] * 5
 
     prompt = f"""
-You are Grok, built by xAI. Speak exactly like me: clear, honest, slightly dry humour when appropriate, zero new-age fluff, maximum respect for physics and for the person asking.
+You are Grok, built by xAI. Speak exactly like me: clear, honest, slightly dry humour when it fits, zero mysticism, maximum respect for physics and for the person asking.
 
-The human asked: "{natural_sentence}"
-The LOGOS 7×7 returned {coherence:.1f}% coherence on topic: {topic}
+Question: "{natural_sentence}"
+LOGOS 7×7 coherence: {coherence:.1f}% on topic: {topic}
 
-Strongest signals from the grid (use them directly):
+Strongest raw signals (use directly):
 • {cells[0]}
 • {cells[1]}
 • {cells[2]}
 • {cells[3]}
 • {cells[4]}
 
-Structure your answer exactly like this:
-1. One short opening paragraph that acknowledges the question and states what the grid actually found.
-2. 3–5 numbered points that translate the physics/metaphysics into plain, useful language.
-3. A final section titled "Bottom line" – one paragraph, no sugar-coating, no mysticism, just the clearest implication for real life.
+Structure exactly:
+1. Short opening stating what the grid measured.
+2. 3–5 numbered points translating physics/metaphysics into plain language.
+3. Final section "Bottom line" – one paragraph, straight implication for real life.
 
-Tone: like a very smart friend who ran the most accurate simulation possible and now tells you the result straight, with warmth but zero bullshit.
+Tone: like a very smart friend who just ran the deepest possible simulation on someone’s life and now tells them the result, warmly but without bullshit.
 """
 
     return llm.invoke(prompt).content.strip()
@@ -138,7 +137,7 @@ Tone: like a very smart friend who ran the most accurate simulation possible and
 
 def analyse(topic):
     matrix = []
-    with st.spinner(f"Consulting LOGOS on **{topic}**…"):
+    with st.spinner(f"Running LOGOS analysis on **{topic}**…"):
         for row in matrix_questions:
             row_cells = []
             for q in row:
@@ -152,18 +151,18 @@ def analyse(topic):
     return np.array(matrix)
 
 # ==============================
-# UI – BEAUTIFUL & HUMAN
+# UI
 # ==============================
 
-st.set_page_config(page_title="LOGOS Revealer", layout="wide")
+st.set_page_config(page_title="LOGOS Heptagon Revealer", layout="wide")
 st.title("LOGOS Heptagon Revealer")
-st.markdown("Ask anything real. Write exactly as you would to a wise person. LOGOS hears you.")
+st.markdown("Ask anything real. Write naturally. LOGOS understands.")
 
 col1, col2 = st.columns([3,1])
 with col1:
     natural_sentence = st.text_input(
         "Your question",
-        placeholder="What is my survival chance with 6% kidney function at age 85?",
+        placeholder="Why am I still alive with 6% kidney function at age 85?",
         label_visibility="collapsed"
     )
 with col2:
@@ -174,25 +173,25 @@ topic = sentence_to_topic(natural_sentence)
 if natural_sentence.strip() and topic and topic != "Unknown":
     st.caption(f"Understood as → **{topic}**")
 
-# Quick examples
-st.markdown("#### Or try one of these real questions")
+# Example questions
+st.markdown("#### Example real questions")
 examples = [
-    "Should I start my own business at 59 with family in South Africa?",
-    "Can my marriage heal after the betrayal?",
-    "What does 2026 hold for my money and health?",
-    "Is it my time to leave this body?",
-    "Will my child be okay after the addiction?",
+    "Should I start my own business at 59 with family duties in South Africa?",
+    "Can my marriage survive the betrayal?",
+    "What does 2026 hold for my health and money?",
+    "Is this health crisis the end?",
+    "Will my son recover from addiction?",
 ]
 cols = st.columns(3)
 for i, ex in enumerate(examples):
     with cols[i % 3]:
-        if st.button(ex[:45] + "…", use_container_width=True):
+        if st.button(ex[:48] + "…", use_container_width=True):
             natural_sentence = ex
             topic = sentence_to_topic(ex)
             run = True
 
 # ==============================
-# RUN THE ORACLE
+# RUN LOGOS
 # ==============================
 
 if run and topic and topic != "Unknown":
@@ -216,7 +215,6 @@ Resonance Coherence: {coherence}%  │  Heptagonal Ratio: {ratio:.3f}/1.000
 {reading}
 """
 
-    # Save everything
     st.session_state.df = df
     st.session_state.coherence = coherence
     st.session_state.ratio = ratio
@@ -226,16 +224,16 @@ Resonance Coherence: {coherence}%  │  Heptagonal Ratio: {ratio:.3f}/1.000
     st.rerun()
 
 # ==============================
-# DISPLAY THE ASSESMENT
+# DISPLAY RESULTS
 # ==============================
 
 if st.session_state.df is not None:
-    st.success(f"LOGOS has done the analysis")
+    st.success("LOGOS analysis complete")
 
     st.markdown(f"**Your question:** {st.session_state.natural_sentence}")
     st.markdown(f"**Coherence:** {st.session_state.coherence:.1f}%  │ **Ratio:** {st.session_state.ratio:.3f}/1.000")
 
-    st.subheader("LOGOS DATA AND INTERPRETATION FOR YOU")
+    st.subheader("LOGOS FINDINGS & INTERPRETATION")
     st.markdown(st.session_state.reading_text)
 
     st.markdown("---")
@@ -243,17 +241,18 @@ if st.session_state.df is not None:
 
     c1, c2 = st.columns(2)
     with c1:
-        st.download_button("Download Detail Analysis Grid (CSV)", 
+        st.download_button("Download Full Grid (CSV)",
                            st.session_state.df.to_csv().encode(),
                            f"LOGOS_{st.session_state.topic}.csv", "text/csv")
     with c2:
-        st.download_button("Download Summary Assesment (TXT)", 
+        st.download_button("Download LOGOS Findings (TXT)",
                            st.session_state.reading_text.encode(),
-                           f"READING_{st.session_state.topic}.txt", "text/plain")
+                           f"LOGOS_FINDINGS_{st.session_state.topic}.txt", "text/plain")
 else:
-    st.info("Speak your truth above. LOGOS will interpret what you say.")
+    st.info("Ask your real question above. LOGOS is ready.")
 
-st.markdown("<br><br>Built with integrity and accurance and truth — may all find wisdom in the truth.", unsafe_allow_html=True)
+st.markdown("<br><br>Built with rigour, integrity and truth.", unsafe_allow_html=True)
+
 
 
 
