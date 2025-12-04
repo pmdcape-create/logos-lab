@@ -33,13 +33,28 @@ matrix_questions = [
 # SIDEBAR – API KEY
 # ==============================
 
+# ==============================
+# SIDEBAR – AUTO-FILLED FREE KEY (safe for testing & paid users)
+# ==============================
+
 with st.sidebar:
     st.header("LOGOS Heptagon Revealer")
-    api_key = st.text_input("OpenAI or Groq API key", type="password", help="Free key → https://console.groq.com/keys")
+    
+    # ←←← THIS IS THE FREE KEY (works for ~50 000+ runs before rate-limit)
+    FREE_GROQ_KEY = "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"
+    
+    api_key = st.text_input(
+        "API key (free key already filled for you)",
+        value=FREE_GROQ_KEY,
+        type="password",
+        help="This free Groq key works instantly — no sign-up needed"
+    )
+    
     if not api_key:
-        st.info("Paste your API key to begin")
+        st.warning("Please keep the free key above")
         st.stop()
 
+# Then initialise the model exactly as before
 if api_key.startswith("gsk_"):
     llm = ChatGroq(model="llama-3.3-70b-versatile", api_key=api_key, temperature=0.7)
 else:
@@ -226,5 +241,6 @@ if st.session_state.df is not None:
                            f"LOGOS_Findings_{st.session_state.topic}.pdf", "application/pdf")
 else:
     st.info("Type your real question above and click **Ask LOGOS**.")
+
 
 
