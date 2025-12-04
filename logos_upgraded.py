@@ -31,7 +31,7 @@ with st.sidebar:
     st.header("LOGOS Heptagon App")
     api_key = st.text_input("OpenAI or Groq API key", type="password", help="Free instant key → https://console.groq.com/keys")
     if not api_key:
-        st.info("Paste your API key to awaken the oracle")
+        st.info("Paste your API key to activate LOGOS")
         st.stop()
 
 if api_key.startswith("gsk_"):
@@ -254,6 +254,7 @@ else:
     st.info("Speak your truth above. LOGOS will interpret what you say.")
 
 st.markdown("<br><br>Built with integrity and accurance and truth — may all find wisdom in the truth.", unsafe_allow_html=True)
+
 
 
 
