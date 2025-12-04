@@ -6,10 +6,13 @@ from langchain_groq import ChatGroq
 import datetime
 import re
 from io import BytesIO
-from reportlab.lib.pagesizes import A4
+
+# ReportLab imports for beautiful PDFs
+from reportlab.lib.pagesizes import A4, landscape
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
+from reportlab.lib.colors import HexColor
 
 # ==============================
 # 7×7 HEPTAGON STRUCTURE
@@ -29,7 +32,7 @@ matrix_questions = [
 ]
 
 # ==============================
-# SIDEBAR – CLEAN & SAFE (user pastes own key)
+# SIDEBAR – API KEY
 # ==============================
 
 with st.sidebar:
@@ -49,6 +52,7 @@ with st.sidebar:
         st.info("↑ Get your free key above, then paste it here")
         st.stop()
 
+# Choose LLM
 if api_key.startswith("gsk_"):
     llm = ChatGroq(model="llama-3.3-70b-versatile", api_key=api_key, temperature=0.7)
 else:
@@ -70,13 +74,13 @@ if st.session_state.first_run:
     ### What you’ll receive
     • A deep 7×7 diagnostic of any life situation  
     • A clear, no-nonsense interpretation (like talking to a very smart friend)  
-    • Two beautiful PDFs you can keep forever
+    • Two beautiful PDFs you can keep forever (now in perfect landscape format)
 
     ### How to use it
-    1. Click the button in the sidebar → get your free Groq key  
-    2. Paste it in the box  and press ENTER 
-    3. Type your real question below  
-    4. Click **Ask LOGOS** → get your PDFs
+    1. Click the button → get your free Groq key  
+    2. Paste it and press ENTER 
+    3. Type your real question  
+    4. Click **Ask LOGOS** → receive your PDFs
 
     Ask anything. LOGOS hears you exactly as you are.
     """)
@@ -86,7 +90,7 @@ if st.session_state.first_run:
     st.stop()
 
 # ==============================
-# (Rest of the code exactly as before — only PDF exports added)
+# CORE FUNCTIONS
 # ==============================
 
 if 'df' not in st.session_state:
@@ -132,31 +136,45 @@ def analyse(topic):
                 for attempt in range(max_retries):
                     try:
                         ans = llm.invoke(prompt).content.strip()
-                        time.sleep(0.5)  # 0.5s pause between calls (keeps under RPM/TPM)
+                        time.sleep(0.5)
                         break
                     except Exception as e:
-                        if "429" in str(e):  # Rate limit
-                            wait_time = 60 if attempt == 0 else 120  # 60s first, then longer
+                        if "429" in str(e):
+                            wait_time = 60 if attempt == 0 else 120
                             st.warning(f"Rate limit — pausing {wait_time}s (attempt {attempt + 1}/{max_retries})")
                             time.sleep(wait_time)
                         else:
-                            st.error(f"Unexpected error: {e}")
+                            st.error(f"Error: {e}")
                             break
                 row_cells.append(ans)
             matrix.append(row_cells)
     return np.array(matrix)
 
-# PDF generators (unchanged)
+# ==============================
+# PDF GENERATORS (FIXED & BEAUTIFUL)
+# ==============================
+
 def grid_to_pdf(df, topic):
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=60)
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=50, bottomMargin=50, leftMargin=40, rightMargin=40)
     styles = getSampleStyleSheet()
-    elements = [Paragraph(f"LOGOS 7×7 Grid – {topic}", styles['Title']), Spacer(1,12)]
+    elements = [
+        Paragraph(f"LOGOS 7×7 Grid – {topic}", styles['Title']),
+        Spacer(1, 20)
+    ]
     data = [[""] + planes]
     for layer, row in df.iterrows():
         data.append([layer] + list(row))
-    table = Table(data)
-    table.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,0),colors.lightgrey),('GRID',(0,0),(-1,-1),0.5,colors.grey),('FONTSIZE',(0,0),(-1,-1),8)]))
+    table = Table(data, colWidths=[120] + [90]*7)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#1e3a8a")),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+        ('BACKGROUND', (0,1), (-1,-1), colors.HexColor("#f8fafc")),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+        ('FONTSIZE', (0,0), (-1,-1), 8),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+    ]))
     elements.append(table)
     doc.build(elements)
     buffer.seek(0)
@@ -164,43 +182,55 @@ def grid_to_pdf(df, topic):
 
 def reading_to_pdf(text):
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4,
-                            rightMargin=72, leftMargin=72,
-                            topMargin=72, bottomMargin=72)
-    
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib import colors
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(A4),           # ← PERFECT LANDSCAPE
+        rightMargin=60, leftMargin=60,
+        topMargin=70, bottomMargin=70
+    )
     
     styles = getSampleStyleSheet()
     
-    # Fix: correctly add custom style
-    styles['Custom'] = ParagraphStyle(
-        name='Custom',
-        parent=styles['Normal'],
-        fontSize=12,
-        leading=16,
-        spaceAfter=12,
-        textColor=colors.black,
-    )
+    # Beautiful custom styles
+    styles.add(ParagraphStyle(name='TitleCustom', parent=styles['Title'], fontSize=22, alignment=1, spaceAfter=30, textColor=HexColor("#1e3a8a")))
+    styles.add(ParagraphStyle(name='HeadingBold', parent=styles['Normal'], fontSize=13, fontName='Helvetica-Bold', spaceAfter=12))
+    styles.add(ParagraphStyle(name='BodyText', parent=styles['Normal'], fontSize=11.5, leading=16, spaceAfter=10, alignment=4))  # 4 = justified
     
-    
-    elements = [Paragraph(line.replace("**","").replace("__",""), styles['Custom']) for line in text.split("\n") if line.strip()]
+    elements = []
+    elements.append(Paragraph("LOGOS ANALYTICS FINDINGS", styles['TitleCustom']))
+    elements.append(Spacer(1, 30))
+
+    for line in text.split("\n"):
+        stripped = line.strip()
+        if not stripped:
+            elements.append(Spacer(1, 8))
+            continue
+        clean = re.sub(r'[\*`_]', '', stripped)  # Remove markdown
+        if any(clean.startswith(x) for x in ["Your question:", "Interpreted as:", "Date & time:", "Resonance Coherence:", "Bottom line"]):
+            elements.append(Paragraph(f"<b>{clean}</b>", styles['HeadingBold']))
+        else:
+            elements.append(Paragraph(clean, styles['BodyText']))
+        elements.append(Spacer(1, 4))
+
     doc.build(elements)
     buffer.seek(0)
     return buffer
 
-# UI & logic (exactly as before)
+# ==============================
+# MAIN UI
+# ==============================
+
 st.set_page_config(page_title="LOGOS", layout="wide")
 st.title("LOGOS Heptagon Revealer")
 st.markdown("Ask anything real. LOGOS hears you.")
 
-col1, col2 = st.columns([3,1])
+col1, col2 = st.columns([3, 1])
 with col1:
     natural_sentence = st.text_input(
-    "Your question",
-    placeholder="Should I start my own business? │ What is conciousness? │ Why am I still alive kidney-function-6% age-85?",
-    label_visibility="collapsed"
-)
+        "Your question",
+        placeholder="Should I start my own business? │ What is consciousness? │ Why am I still alive kidney-function-6% age-85?",
+        label_visibility="collapsed"
+    )
 with col2:
     st.markdown("<br>", unsafe_allow_html=True)
     run = st.button("Ask LOGOS", type="primary", use_container_width=True)
@@ -217,6 +247,7 @@ if run and topic != "Unknown":
     coherence = round(min(avg * 2.7, 99.99), 2)
     ratio = round(avg / 10, 3)
     reading = generate_structured_reading(topic, natural_sentence, coherence, ratio, df)
+    
     full_reading = f"""LOGOS ANALYTICS FINDINGS
 {'='*60}
 Your question: {natural_sentence}
@@ -234,6 +265,10 @@ Resonance Coherence: {coherence}%  │  Heptagonal Ratio: {ratio:.3f}/1.000
     st.session_state.ratio = ratio
     st.rerun()
 
+# ==============================
+# DISPLAY RESULTS
+# ==============================
+
 if st.session_state.df is not None:
     st.success("LOGOS analysis complete")
     st.markdown(f"**Your question:** {st.session_state.natural_sentence}")
@@ -241,17 +276,26 @@ if st.session_state.df is not None:
     st.subheader("LOGOS FINDINGS & INTERPRETATION")
     st.markdown(st.session_state.reading_text)
     st.markdown("---")
-    st.dataframe(st.session_state.df.style.set_properties(**{'text-align':'left'}), use_container_width=True)
+    st.dataframe(st.session_state.df.style.set_properties(**{'text-align': 'left', 'white-space': 'pre-wrap'}), use_container_width=True)
 
     c1, c2 = st.columns(2)
     with c1:
-        st.download_button("Download 7×7 Grid (PDF)", grid_to_pdf(st.session_state.df, st.session_state.topic).getvalue(),
-                           f"LOGOS_Grid_{st.session_state.topic}.pdf", "application/pdf")
+        st.download_button(
+            "Download 7×7 Grid (PDF)",
+            grid_to_pdf(st.session_state.df, st.session_state.topic).getvalue(),
+            f"LOGOS_Grid_{st.session_state.topic}.pdf",
+            "application/pdf"
+        )
     with c2:
-        st.download_button("Download Findings (PDF)", reading_to_pdf(st.session_state.reading_text).getvalue(),
-                           f"LOGOS_Findings_{st.session_state.topic}.pdf", "application/pdf")
+        st.download_button(
+            "Download Findings (Landscape PDF)",
+            reading_to_pdf(st.session_state.reading_text).getvalue(),
+            f"LOGOS_Findings_{st.session_state.topic}.pdf",
+            "application/pdf"
+        )
 else:
     st.info("Get your free key → paste it → ask your question.")
+
 
 
 
