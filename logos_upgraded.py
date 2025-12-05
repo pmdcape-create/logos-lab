@@ -393,7 +393,7 @@ def generate_structured_reading(topic, natural_sentence, coherence, ratio, grid_
 
     User's Question: "{natural_sentence}"
     Interpreted Topic: {topic}
-    Coherence of Reading: {coherence:.1f}% 
+    # Coherence of Reading: {coherence:.1f}% 
     Strong Interconnection Signals (Nodes): {" • ".join(cells)}
 
     Structure your answer as follows:
@@ -412,30 +412,23 @@ def analyse(topic):
             row_cells = []
             for q in row:
                 
-                # CORRECTED PROMPT (Refined tone and focus on physics/interconnection)
+                # THIS is the correct prompt for individual 7×7 nodes
                 prompt = f"""
-                You are a wise and friendly expert consultant providing deep analysis for the user.
-                The goal is to deliver a clear, honest, and warm interpretation, blending universal truths, current physics concepts (like entanglement, resonance, or fields), and the metaphysical basis of the LOGOS model. Do not use overly 'mystical' or 'fluffy' language.
+                You are a wise and friendly expert consultant blending physics and metaphysics.
+                Topic: {topic}
+                Grid Question: {q}
 
-                User's Question: "{natural_sentence}"
-                Interpreted Topic: {topic}
-                Coherence of Reading: {coherence:.1f}% 
-                Strong Interconnection Signals (Nodes): {" • ".join(cells)}
+                Provide an answer for this exact node. Blend universal truth, current physics concepts (entanglement, resonance, fields, non-locality), and the metaphysical basis of the LOGOS model.
+                Keep it concise (8–15 words), profound, and focused on interconnectedness.
 
-Structure your answer as follows:
-1. A short, empathetic, and friendly opening acknowledging the question.
-2. 3–5 numbered points that synthesize the "Strong Signals" and core grid themes (e.g., Cycles, Entanglement, Resonance, Blueprint) into actionable, grounded insights.
-3. A clear, expert "Bottom line" paragraph summarizing the overall truth revealed by the analysis.
+                If the topic involves speculative or unproven phenomena, acknowledge possible metaphysical interpretations (e.g. spiritual entanglement) while neutrally noting the absence of direct empirical evidence — without dismissal.
+                """
 
-For topics with speculative elements (e.g., ghosts or unproven interactions), balance responses by noting metaphysical possibilities in the model (like spiritual entanglement) while indicating conflicts with current facts/physics neutrally. Connect fairly to the user's beliefs without pushback or dismissal.
-"""
-                
                 max_retries = 3
                 ans = "…"
                 for attempt in range(max_retries):
                     try:
                         ans = llm.invoke(prompt).content.strip()
-                        # Removed time.sleep(0.5) to optimize speed
                         break
                     except Exception as e:
                         if "429" in str(e):
@@ -622,4 +615,5 @@ if st.session_state.df is not None:
         )
 else:
     st.info("Get your free key → paste it → ask your question.")
+
 
