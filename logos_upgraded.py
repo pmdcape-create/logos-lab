@@ -130,7 +130,7 @@ if st.session_state.first_run:
  }
                 .container {
                     width: 100%;
- max-width: 500px;
+ max_width: 500px;
                     background-color: transparent; /* Changed to transparent */
                     border-radius: 12px;
  }
@@ -193,7 +193,7 @@ if st.session_state.first_run:
                     left: 50%;
                     transform: translate(-50%, -50%);
                     width: 85%;
-                    max-width: 250px;
+                    max_width: 250px;
                     background-color: white;
                     border: 1px solid #1e3a8a;
                     border-radius: 8px;
@@ -453,8 +453,8 @@ def analyse(topic):
                 ans = "…"
                 for attempt in range(max_retries):
                     try:
-                        ans 
-                        = llm.invoke(prompt).content.strip()
+                        # FIX: Combined assignment onto one line to fix SyntaxError
+                        ans = llm.invoke(prompt).content.strip()
                         break
                     except Exception as e:
                         if "429" in str(e):
@@ -656,7 +656,7 @@ with col2:
     user_input = st.session_state.get("user_question", "").strip()
     
     run = st.button(
-        "Ask LOGOS", # FIX: Combined the string literal onto one line
+        "Ask LOGOS",
         type="primary",
         use_container_width=True,
         disabled=not bool(user_input),      # active as soon as something is typed
