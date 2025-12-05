@@ -11,3 +11,4 @@ openai
 groq
 faiss-cpu
 reportlab
+tabulate
