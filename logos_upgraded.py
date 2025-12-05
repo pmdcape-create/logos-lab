@@ -65,6 +65,13 @@ import streamlit.components.v1 as components
 
 # ... (rest of the file remains the same until the WELCOME SCREEN block)
 
+# ... (all imports remain the same)
+
+# Insert this import near the top of your file, with the other 'import' statements:
+import streamlit.components.v1 as components 
+
+# ... (rest of the file remains the same until the WELCOME SCREEN block)
+
 # ==============================
 # WELCOME SCREEN (first visit only)
 # ==============================
@@ -76,8 +83,8 @@ if st.session_state.first_run:
     
     st.title("Welcome to LOGOS Heptagon Revealer")
     
-    # Use columns to place text on the left and the visualization on the right
-    col_text, col_viz = st.columns([1, 1])
+    # ADJUSTED: Use columns to shift space right for the visualization [0.8, 1.2]
+    col_text, col_viz = st.columns([0.8, 1.2])
     
     with col_text:
         st.markdown("""
@@ -115,7 +122,7 @@ if st.session_state.first_run:
                 }
                 body {
                     font-family: 'Inter', sans-serif;
-                    background-color: transparent; /* Use transparent background */
+                    background-color: transparent; 
                     display: flex;
                     justify-content: center;
                     align-items: center;
@@ -126,20 +133,19 @@ if st.session_state.first_run:
                 .container {
                     width: 100%;
                     max-width: 500px;
-                    background-color: white;
-                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+                    background-color: transparent; /* Changed to transparent */
                     border-radius: 12px;
                 }
                 .heptagon-container {
                     position: relative;
-                    width: 320px; /* Reduced base size to fit the column */
-                    height: 320px;
-                    margin: 20px auto;
+                    width: 300px; /* Reduced overall size */
+                    height: 300px;
+                    margin: 10px auto; /* Reduced margin */
                 }
                 .point {
                     position: absolute;
-                    width: 80px;
-                    height: 80px;
+                    width: 70px; /* Slightly smaller points */
+                    height: 70px;
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
@@ -150,42 +156,70 @@ if st.session_state.first_run:
                     cursor: pointer;
                     border-radius: 12px;
                     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                    z-index: 10; 
                 }
                 .point:hover, .point.active {
                     transform: scale(1.05);
                     box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
-                    z-index: 10;
+                    z-index: 20; /* Ensure active point is on top */
                 }
                 .layer-number {
-                    font-size: 1.25rem;
+                    font-size: 1.1rem; /* Slightly smaller font */
                     font-weight: 700;
                     line-height: 1;
                 }
                 .pane-name {
-                    font-size: 0.7rem;
+                    font-size: 0.65rem; /* Smaller font for pane name */
                     font-weight: 600;
                 }
                 .center-dot {
                     position: absolute;
                     top: 50%;
                     left: 50%;
-                    width: 40px;
-                    height: 40px;
+                    width: 30px; /* Smaller center dot */
+                    height: 30px;
                     background-color: var(--center-color);
                     border-radius: 50%;
                     transform: translate(-50%, -50%);
                     z-index: 5;
                     box-shadow: 0 0 10px rgba(252, 165, 165, 0.8);
                 }
+                
+                /* NEW DETAIL POPUP STYLES */
+                #detail-popup {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    width: 85%;
+                    max-width: 250px;
+                    background-color: white;
+                    border: 1px solid #1e3a8a;
+                    border-radius: 8px;
+                    padding: 10px;
+                    box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);
+                    z-index: 30; 
+                    pointer-events: none; /* Allows clicks to pass through to the button */
+                    display: none; /* Initially hidden */
+                    text-align: left;
+                }
+                #detail-popup h4 {
+                    font-size: 14px;
+                    font-weight: bold;
+                    margin-bottom: 5px;
+                    color: #1e3a8a;
+                }
+                #detail-popup p {
+                    font-size: 10px;
+                    line-height: 1.3;
+                    margin: 0;
+                    color: #475569;
+                }
 
                 /* Hiding the side panel for the small embedded view */
                 #details-panel { display: none; }
                 .flex-col > .container { padding: 0 !important; box-shadow: none !important; }
 
-                /* Adjusting for the Streamlit container padding */
-                .heptagon-container {
-                    margin: 0 auto;
-                }
             </style>
         </head>
         <body>
@@ -194,30 +228,31 @@ if st.session_state.first_run:
 
                     <div class="heptagon-container" id="heptagon">
                         <div class="center-dot"></div>
-                        </div>
+                        <div id="detail-popup"></div> 
+                    </div>
 
-                    <div id="details-panel"></div>
                 </div>
             </div>
 
             <script>
                 // Define the 7 Layers and 7 Panes
                 const modelData = [
-                    { layer: 1, pane: "Purpose", color: 'bg-indigo-200', role: "Spark of being", influence: "Receives 'raw potential' and initializes unique entities or events." },
-                    { layer: 2, pane: "Information/Truth", color: 'bg-blue-200', role: "Sustained being", influence: "Maintains continuity and identity; subject to feedback from higher layers." },
-                    { layer: 3, pane: "Design", color: 'bg-teal-200', role: "Impact of existence", influence: "How instances affect the environment; creates observable outcomes." },
-                    { layer: 4, pane: "Creation", color: 'bg-green-200', role: "Integration (spacetime)", influence: "Mediates interactions among 1–3; the 'arena' of experience and evolution." },
-                    { layer: 5, pane: "Refinement", color: 'bg-yellow-200', role: "Quantum of decisions", influence: "Introduces choice, adaptation, and probabilistic collapse; modifies layers 1–4 dynamically." },
-                    { layer: 6, pane: "Revelation", color: 'bg-orange-200', role: "Blueprint layer (soul)", influence: "Maintains coherence, imposes laws and principles; acts like system governance." },
-                    { layer: 7, pane: "Continuity", color: 'bg-red-200', role: "Divine (consciousness)", role: "Divine (consciousness)", influence: "Provides ultimate direction, purpose, and overarching alignment; informs all layers below." }
+                    { layer: 1, pane: "Purpose", color: 'bg-indigo-200', role: "Spark of being", influence: "L1: Receives 'raw potential' and initializes unique entities or events." },
+                    { layer: 2, pane: "Information/Truth", color: 'bg-blue-200', role: "Sustained being", influence: "L2: Maintains continuity and identity; subject to feedback from higher layers." },
+                    { layer: 3, pane: "Design", color: 'bg-teal-200', role: "Impact of existence", influence: "L3: How instances affect the environment; creates observable outcomes." },
+                    { layer: 4, pane: "Creation", color: 'bg-green-200', role: "Integration (spacetime)", influence: "L4: Mediates interactions among 1–3; the 'arena' of experience and evolution." },
+                    { layer: 5, pane: "Refinement", color: 'bg-yellow-200', role: "Quantum of decisions", influence: "L5: Introduces choice, adaptation, and probabilistic collapse; modifies layers 1–4 dynamically." },
+                    { layer: 6, pane: "Revelation", color: 'bg-orange-200', role: "Blueprint layer (soul)", influence: "L6: Maintains coherence, imposes laws and principles; acts like system governance." },
+                    { layer: 7, pane: "Continuity", color: 'bg-red-200', role: "Divine (consciousness)", influence: "L7: Provides ultimate direction, purpose, and overarching alignment; informs all layers below." }
                 ];
 
-                // Constants for positioning (adjusted for 320x320 view box)
-                const CENTER_X = 160;
-                const CENTER_Y = 160;
-                const RADIUS = 140; /* Reduced radius */
+                // Constants for positioning (adjusted for 300x300 view box)
+                const CENTER_X = 150;
+                const CENTER_Y = 150;
+                const RADIUS = 130; /* Adjusted radius for 300px size */
                 
                 let activePoint = null;
+                const detailPopup = document.getElementById('detail-popup');
 
                 function calculateHeptagonPoint(index, totalPoints, radius, centerX, centerY) {
                     const angleDeg = (360 / totalPoints) * index - 90; 
@@ -227,26 +262,36 @@ if st.session_state.first_run:
                     return { x, y };
                 }
 
-                function updateDetails(data, pointElement = null) {
+                // NEW: Update popup functionality
+                function updateDetails(data, pointElement) {
+                    detailPopup.innerHTML = `
+                        <h4>Layer ${data.layer}: ${data.pane}</h4>
+                        <p>${data.influence}</p>
+                    `;
+                    detailPopup.style.display = 'block';
+                    
                     if (activePoint && activePoint !== pointElement) {
                         activePoint.classList.remove('active');
                     }
-                    if (pointElement) {
-                        activePoint = pointElement;
-                        activePoint.classList.add('active');
-                    }
+                    activePoint = pointElement;
+                    activePoint.classList.add('active');
                 }
 
-                function clearDetails() {
-                    if (activePoint) {
-                        activePoint.classList.remove('active');
-                        activePoint = null;
+                // NEW: Clear popup functionality
+                function clearDetails(pointElement) {
+                    if (activePoint === pointElement) {
+                         activePoint.classList.remove('active');
+                         activePoint = null;
+                         detailPopup.style.display = 'none';
                     }
                 }
                 
                 function createHeptagon() {
                     const container = document.getElementById('heptagon');
-                    container.innerHTML = '<div class="center-dot"></div>';
+                    
+                    // Clear existing points and SVG lines, but keep the center dot and popup
+                    const elementsToRemove = Array.from(container.children).filter(el => el.id !== 'detail-popup' && !el.classList.contains('center-dot'));
+                    elementsToRemove.forEach(el => el.remove());
 
                     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
                     svg.setAttribute('width', '100%');
@@ -276,11 +321,11 @@ if st.session_state.first_run:
 
                     pointsCoordinates.forEach(({ x, y, data }) => {
                         const point = document.createElement('div');
-                        point.className = `point ${data.color} text-gray-800 hover:ring-4 ring-offset-2 ring-${data.color.replace('bg-', '')}-500`;
+                        point.className = `point ${data.color} text-gray-800`;
                         
-                        // Adjust position to center the div on the calculated point (80x80 div = 40px offset)
-                        point.style.left = `${x - 40}px`; 
-                        point.style.top = `${y - 40}px`;
+                        // Adjust position to center the div on the calculated point (70x70 div = 35px offset)
+                        point.style.left = `${x - 35}px`; 
+                        point.style.top = `${y - 35}px`;
                         point.style.zIndex = '10';
 
                         point.innerHTML = `
@@ -290,11 +335,12 @@ if st.session_state.first_run:
 
                         // Add event listeners for interactivity
                         point.addEventListener('mouseenter', () => updateDetails(data, point));
-                        point.addEventListener('click', () => updateDetails(data, point)); 
-                        point.addEventListener('mouseleave', clearDetails);
+                        point.addEventListener('mouseleave', () => clearDetails(point));
 
                         container.appendChild(point);
                     });
+                    
+                    clearDetails(null); // Ensure popup starts hidden
                 }
 
                 window.addEventListener('resize', createHeptagon);
@@ -303,8 +349,8 @@ if st.session_state.first_run:
         </body>
         </html>
         """
-        # --- THE FIX IS HERE ---
-        components.html(heptagon_html, height=350) 
+        # The corrected, stable function call:
+        components.html(heptagon_html, height=320) # Adjusted height for slightly smaller gem
 
     # Place the action button below both columns for clarity
     if st.button("I’m ready → Begin", type="primary", use_container_width=True):
@@ -568,6 +614,7 @@ if st.session_state.df is not None:
         )
 else:
     st.info("Get your free key → paste it → ask your question.")
+
 
 
 
