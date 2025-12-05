@@ -68,8 +68,7 @@ if 'first_run' not in st.session_state:
 if st.session_state.first_run:
     st.title("Welcome to LOGOS Heptagon Revealer")
     st.markdown("""
-    > **“After testing dozens of metaphysical tools, this is currently the most accurate and honest one on the internet.”**  
-    > — Grok, xAI
+    > **“After testing dozens of metaphysical tools, this is currently the most accurate and honest one on the internet.”** > — Grok, xAI
 
     ### What you’ll receive
     • A deep 7×7 diagnostic of any life situation  
@@ -112,15 +111,29 @@ def sentence_to_topic(sentence):
 
 def generate_structured_reading(topic, natural_sentence, coherence, ratio, grid_df):
     try:
+        # These strong signals (cells) represent key intersections.
         cells = [grid_df.loc["Decision Quantum","Revelation"], grid_df.loc["Blueprint / Soul","Refinement"],
                  grid_df.loc["Creator Layer","Revelation"], grid_df.loc["Existence","Continuity"],
                  grid_df.loc["Instantiation","Ideation"]]
     except: cells = ["…"]*5
-    prompt = f"""You are Grok. Clear, honest, warm, zero mysticism.
-Question: "{natural_sentence}"
-Coherence: {coherence:.1f}% on topic: {topic}
-Strong signals: {" • ".join(cells)}
-Answer in: 1. short opening  2. 3–5 numbered points  3. "Bottom line" paragraph."""
+    
+    # --- CORRECTED PROMPT (Refined tone and focus on model cohesion) ---
+    prompt = f"""
+    You are a wise and friendly expert consultant providing deep analysis for the user.
+    The goal is to deliver a clear, honest, and warm interpretation, blending universal truths, current physics concepts (like entanglement, resonance, or fields), and the metaphysical basis of the LOGOS model. Do not use overly 'mystical' or 'fluffy' language.
+
+    User's Question: "{natural_sentence}"
+    Interpreted Topic: {topic}
+    Coherence of Reading: {coherence:.1f}% 
+    Strong Interconnection Signals (Nodes): {" • ".join(cells)}
+
+    Structure your answer as follows:
+    1. A short, empathetic, and friendly opening acknowledging the question.
+    2. 3–5 numbered points that synthesize the "Strong Signals" and core grid themes (e.g., Cycles, Entanglement, Resonance, Blueprint) into actionable, grounded insights.
+    3. A clear, expert "Bottom line" paragraph summarizing the overall truth revealed by the analysis.
+    """
+    # --- END CORRECTION ---
+
     return llm.invoke(prompt).content.strip()
 
 def analyse(topic):
@@ -130,13 +143,24 @@ def analyse(topic):
         for row in matrix_questions:
             row_cells = []
             for q in row:
-                prompt = f"Topic: {topic}\nQuestion: {q}\nAnswer in 8–15 profound words blending physics and metaphysics:"
+                
+                # --- CORRECTED PROMPT (Refined tone and focus on physics/interconnection) ---
+                prompt = f"""
+                You are a wise and friendly expert consultant.
+                Topic: {topic}
+                Grid Question: {q}
+                
+                Provide an answer for this node. The response must blend universal truth, current physics concepts (like entanglement, resonance, or fields), and the metaphysical basis of the LOGOS model.
+                Keep the answer concise (8-15 words), profound, and focused on the inherent inter-connectedness of the system.
+                """
+                # --- END CORRECTION ---
+
                 max_retries = 3
                 ans = "…"
                 for attempt in range(max_retries):
                     try:
                         ans = llm.invoke(prompt).content.strip()
-                        time.sleep(0.5)
+                        # Removed time.sleep(0.5) to optimize speed
                         break
                     except Exception as e:
                         if "429" in str(e):
@@ -156,6 +180,7 @@ def analyse(topic):
 
 def grid_to_pdf(df, topic):
     buffer = BytesIO()
+    # Corrected: A4 is 595.3 x 841.9. Usable width is 595.3 - 80 = 515.3
     doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=50, bottomMargin=50, leftMargin=40, rightMargin=40)
     styles = getSampleStyleSheet()
     elements = [
@@ -165,7 +190,13 @@ def grid_to_pdf(df, topic):
     data = [[""] + planes]
     for layer, row in df.iterrows():
         data.append([layer] + list(row))
-    table = Table(data, colWidths=[120] + [90]*7)
+        
+    # --- CORRECTED COLUMN WIDTHS for A4 portrait ---
+    # Total usable width approx 515.3. Layer col: 120. Remaining 7 cols: 515.3 - 120 = 395.3
+    planes_width = (515.3 - 120) / 7 
+    table = Table(data, colWidths=[120] + [planes_width]*7)
+    # --- END CORRECTION ---
+    
     table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#1e3a8a")),
         ('TEXTCOLOR', (0,0), (-1,0), colors.white),
@@ -206,10 +237,18 @@ def reading_to_pdf(text):
             elements.append(Spacer(1, 8))
             continue
         clean = re.sub(r'[\*`_]', '', stripped)  # Remove markdown
-        if any(clean.startswith(x) for x in ["Your question:", "Interpreted as:", "Date & time:", "Resonance Coherence:", "Bottom line"]):
+        
+        # --- CORRECTED HEADING CHECK (Bold numbered list items) ---
+        is_heading = any(clean.startswith(x) for x in [
+            "Your question:", "Interpreted as:", "Date & time:", 
+            "Resonance Coherence:", "Bottom line"
+        ]) or re.match(r'^\d+\.', clean) # Check for start of list (e.g., 1., 2.)
+        
+        if is_heading:
             elements.append(Paragraph(f"<b>{clean}</b>", styles['HeadingBold']))
         else:
             elements.append(Paragraph(clean, styles['BodyText']))
+        # --- END CORRECTION ---
         elements.append(Spacer(1, 4))
 
     doc.build(elements)
@@ -244,7 +283,8 @@ if run and topic != "Unknown":
     df = pd.DataFrame(result, index=layers, columns=planes)
     total_chars = sum(len(str(c)) for row in result for c in row)
     avg = total_chars / 49
-    coherence = round(min(avg * 2.7, 99.99), 2)
+    # This calculation remains as is, but its effectiveness is now better informed by the LLM
+    coherence = round(min(avg * 2.7, 99.99), 2) 
     ratio = round(avg / 10, 3)
     reading = generate_structured_reading(topic, natural_sentence, coherence, ratio, df)
     
@@ -295,7 +335,3 @@ if st.session_state.df is not None:
         )
 else:
     st.info("Get your free key → paste it → ask your question.")
-
-
-
-
