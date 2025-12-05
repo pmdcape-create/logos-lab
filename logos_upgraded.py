@@ -60,6 +60,11 @@ else:
 
 # ... (rest of the file remains the same until the WELCOME SCREEN block)
 
+# Insert this import near the top of your file, with the other 'import' statements:
+import streamlit.components.v1 as components 
+
+# ... (rest of the file remains the same until the WELCOME SCREEN block)
+
 # ==============================
 # WELCOME SCREEN (first visit only)
 # ==============================
@@ -93,9 +98,7 @@ if st.session_state.first_run:
         st.markdown("Ask anything. LOGOS hears you exactly as you are.")
 
     with col_viz:
-        # Embed the interactive HTML/JavaScript model using st.html
-        # Note: If st.html is not available, you may need to use st.components.v1.html
-        # The content below is the full HTML/JS from logos heptagon Gem2.html
+        # Embed the interactive HTML/JavaScript model using st.components.v1.html (FIXED)
         
         heptagon_html = """
         <!DOCTYPE html>
@@ -300,7 +303,8 @@ if st.session_state.first_run:
         </body>
         </html>
         """
-        st.html(heptagon_html, height=350) # Set height to prevent scrollbar
+        # --- THE FIX IS HERE ---
+        components.html(heptagon_html, height=350) 
 
     # Place the action button below both columns for clarity
     if st.button("I’m ready → Begin", type="primary", use_container_width=True):
@@ -564,6 +568,7 @@ if st.session_state.df is not None:
         )
 else:
     st.info("Get your free key → paste it → ask your question.")
+
 
 
 
