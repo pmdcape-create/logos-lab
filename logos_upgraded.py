@@ -26,7 +26,6 @@ matrix_questions = [
     ["What initial intent sets this in motion?", "What question arises at the moment of becoming?", 
  "What seed structure forms?", "How does the first form appear?", "How is the spark tested?", "What does this reveal about the source?", "What imprint echoes forward?"],
     ["What meaning underlies this presence?", "How does awareness explore identity?", "How does the form assert itself?", "How does being express itself?", "How does experience shape it?", "What deeper truths are revealed?", "How is identity preserved across cycles?"],
-    # FIX APPLIED HERE: Removed unescaped newline inside the string literal
     ["What outcome was intended?", "What consequences reflect origin?", "How do effects shape future?", "How is impact made visible?", "How are results absorbed?", "What laws does impact reveal?", "How does the echo shape continuity?"],
     ["What cycles are seeded?", "What patterns need renewal?", "How is the form carried forward?", "How does expression evolve?", "What is learned across iterations?", "What insight arises through recursion?", "What keeps the pattern alive?"],
     ["Where is choice embedded?", "What crossroads are faced?", "How do decisions reshape reality?", "What actions externalise choice?", "How does consequence refine decisions?", "What do results reveal about truth?", "How are decisions encoded across time?"],
@@ -97,8 +96,8 @@ if st.session_state.first_run:
         4. Click **Ask LOGOS** → receive your files
         """)
         
-        st.markdown("Ask anything.
- LOGOS hears you exactly as you are.")
+        # FIX APPLIED HERE: The string is now on a single line
+        st.markdown("Ask anything. LOGOS hears you exactly as you are.")
 
     with col_viz:
         # Embed the interactive HTML/JavaScript model using st.components.v1.html (FIXED)
@@ -271,9 +270,9 @@ if st.session_state.first_run:
 
                 function calculateHeptagonPoint(index, totalPoints, radius, centerX, centerY) {
                     const angleDeg = (360 / totalPoints) * index - 90;
- const angleRad = angleDeg * (Math.PI / 180);
+                    const angleRad = angleDeg * (Math.PI / 180);
                     const x = centerX + radius * Math.cos(angleRad);
- const y = centerY + radius * Math.sin(angleRad);
+                    const y = centerY + radius * Math.sin(angleRad);
                     return { x, y };
  }
 
@@ -421,7 +420,7 @@ def generate_structured_reading(topic, natural_sentence, coherence, ratio, grid_
     User's Question: "{natural_sentence}"
     Interpreted Topic: {topic}
     # Coherence of Reading: {coherence:.1f}% 
-    Strong Interconnection Signals (Nodes): {" • ".join(cells)}
+    Strong Interconnection Signals (Nodes): {" • ".in(cells)}
 
     Structure your answer as follows:
     1. A short, empathetic, and friendly opening acknowledging the question.
