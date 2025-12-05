@@ -12,3 +12,4 @@ groq
 faiss-cpu
 reportlab
 tabulate
+streamlit-component-html
