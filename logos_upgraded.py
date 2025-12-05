@@ -541,25 +541,28 @@ st.set_page_config(page_title="LOGOS", layout="wide")
 st.title("LOGOS Heptagon Revealer")
 st.markdown("Ask anything real. LOGOS hears you.")
 
+# ==============================
+# MAIN UI – FINAL FIXED INPUT + BUTTON
+# ==============================
+
 col1, col2 = st.columns([3, 1])
 
 with col1:
+    # The key makes the value go into session_state
     natural_sentence = st.text_input(
         label="Your question",
         placeholder="Type your question here…",
         label_visibility="collapsed",
-        key="user_question"
+        key="user_question"          # ← this is what was breaking the button
     )
 
-    # Dynamic border: neutral → blue (typing) → green (filled)
-    if natural_sentence.strip():
-        border_color = "#10b981"  # green-500
-    elif st.session_state.get("user_question", "") == "":
-        border_color = "#e2e8f0"  # slate-200
+    # ────── Dynamic border colors (blue when typing → green when filled) ──────
+    current = st.session_state.get("user_question", "")
+    if current.strip():
+        border_color = "#10b981"   # green
     else:
-        border_color = "#3b82f6"  # blue-500
+        border_color = "#e2e8f0"   # neutral
 
-    # Custom CSS injection for beautiful input
     st.markdown(
         f"""
         <style>
@@ -583,7 +586,7 @@ with col1:
         unsafe_allow_html=True
     )
 
-    # Beautiful example questions (always visible)
+    # Example questions
     with st.expander("Examples – click to use", expanded=False):
         examples = [
             "Should I start my own business at age 42?",
@@ -601,16 +604,20 @@ with col1:
 
 with col2:
     st.markdown("<br><br>", unsafe_allow_html=True)
+    
+    # ←←← THIS IS THE CRITICAL FIX
     user_input = st.session_state.get("user_question", "")
     run = st.button(
         "Ask LOGOS",
         type="primary",
         use_container_width=True,
-        disabled=not user_input.strip()  # Now works whether typing or clicking example
+        disabled=not user_input.strip()      # ← now works when typing!
     )
 
-# Show interpreted topic
+# Use the session_state value from now on (not the local variable)
+natural_sentence = st.session_state.get("user_question", "")
 topic = sentence_to_topic(natural_sentence)
+
 if natural_sentence.strip() and topic != "Unknown":
     st.caption(f"Understood as → **{topic}**")
 # ==============================
@@ -646,6 +653,7 @@ if st.session_state.df is not None:
         )
 else:
     st.info("Get your free key → paste it → ask your question.")
+
 
 
 
