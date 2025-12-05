@@ -410,11 +410,10 @@ def generate_structured_reading(topic, natural_sentence, coherence, ratio, grid_
                  grid_df.loc["Instantiation","Ideation"]]
     except: cells = ["…"]*5
     
-    # CORRECTED PROMPT (Refined tone and focus on model cohesion)
+    # MODIFIED PROMPT: Added instruction for a 'Conceptual Context' section
     prompt = f"""
     You are a wise and friendly expert consultant providing deep analysis for the user.
-    The goal is to deliver a clear, 
- honest, and warm interpretation, blending universal truths, current physics concepts (like entanglement, resonance, or fields), and the metaphysical basis of the LOGOS model. Do not use overly 'mystical' or 'fluffy' language.
+    The goal is to deliver a clear, honest, and warm interpretation, blending universal truths, current physics concepts (like entanglement, resonance, or fields), and the metaphysical basis of the LOGOS model. Do not use overly 'mystical' or 'fluffy' language.
 
     User's Question: "{natural_sentence}"
     Interpreted Topic: {topic}
@@ -423,9 +422,10 @@ def generate_structured_reading(topic, natural_sentence, coherence, ratio, grid_
 
     Structure your answer as follows:
     1. A short, empathetic, and friendly opening acknowledging the question.
- 2. 3–5 numbered points that synthesize the "Strong Signals" and core grid themes (e.g., Cycles, Entanglement, Resonance, Blueprint) into actionable, grounded insights.
- 3. A clear, expert "Bottom line" paragraph summarizing the overall truth revealed by the analysis.
- """
+    2. A brief, distinct section titled "**Conceptual Context**". In this section, provide 1-2 high-level paragraphs of **factual context** about the main concept from the perspective of established philosophy (e.g., Compatibilism, Determinism) or science (e.g., Quantum Entanglement). *Do not define the term, but explain the core challenge or implication it presents to the subject.*
+    3. 3–5 numbered points that synthesize the "Strong Signals" and core grid themes (e.g., Cycles, Entanglement, Resonance, Blueprint) into actionable, grounded insights from the LOGOS perspective.
+    4. A clear, expert "Bottom line" paragraph summarizing the overall truth revealed by the analysis.
+    """
 
     return llm.invoke(prompt).content.strip()
 
@@ -505,10 +505,10 @@ def reading_to_pdf(text):
             continue
         clean = re.sub(r'[\*`_]', '', stripped)  # Remove markdown
         
-        # CORRECTED HEADING CHECK (Bold numbered list items)
+        # CORRECTED HEADING CHECK (Bold numbered list items and new 'Conceptual Context')
         is_heading = any(clean.startswith(x) for x in [
             "Your question:", "Interpreted as:", "Date & time:", 
-            "Resonance Coherence:", "Bottom line"
+            "Resonance Coherence:", "Bottom line", "Conceptual Context"
         ]) or re.match(r'^\d+\.', clean)
  
         
