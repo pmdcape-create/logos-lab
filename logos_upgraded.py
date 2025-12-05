@@ -16,7 +16,7 @@ from reportlab.lib import colors
 from reportlab.lib.colors import HexColor
 
 # ==============================
-# 7×7 HEPTAGON STRUCTURE
+# 7x7 HEPTAGON STRUCTURE
 # ==============================
 
 planes = ["Ideation", "Inquiry", "Formation", "Expression", "Refinement", "Revelation", "Continuity"]
@@ -84,7 +84,7 @@ if st.session_state.first_run:
  Grok, xAI
 
         #### What you’ll receive
-        * A deep **7×7 diagnostic** of any life situation  
+        * A deep **7x7 diagnostic** of any life situation  
         * A clear, **no-nonsense interpretation** (like talking to a very smart friend)  
         * Two beautiful files you can keep forever (a landscape PDF summary and an HTML data grid)
 
@@ -374,7 +374,6 @@ if st.session_state.first_run:
         st.session_state.first_run = False
         st.rerun()
     
-    # FIX: Corrected indentation for st.stop()
     st.stop()
      
 # ==============================
@@ -420,7 +419,7 @@ def generate_structured_reading(topic, natural_sentence, coherence, ratio, grid_
     User's Question: "{natural_sentence}"
     Interpreted Topic: {topic}
     # Coherence of Reading: {coherence:.1f}% 
-    Strong Interconnection Signals (Nodes): {" • ".join(cells)} # FIX: Changed .in(cells) to .join(cells)
+    Strong Interconnection Signals (Nodes): {" • ".join(cells)}
 
     Structure your answer as follows:
     1. A short, empathetic, and friendly opening acknowledging the question.
@@ -439,7 +438,7 @@ def analyse(topic):
             for q in row:
                 
                 # THIS is the 
-                correct_prompt for individual 7×7 nodes
+                correct_prompt for individual 7x7 nodes # FIX: Changed 7×7 to 7x7
                 prompt = f"""
                 You are a wise and friendly expert consultant blending physics and metaphysics.
  Topic: {topic}
@@ -756,14 +755,14 @@ if st.session_state.df is not None and st.session_state.topic_confirmed:
     st.markdown(st.session_state.reading_text)
   
     st.markdown("---")
-    st.subheader("7×7 Heptagon Data Grid")
+    st.subheader("7x7 Heptagon Data Grid")
     st.dataframe(st.session_state.df.style.set_properties(**{'text-align': 'left', 'white-space': 'pre-wrap'}), use_container_width=True)
 
     c1, c2 = st.columns(2)
     with c1:
         # **Download the Grid as a readable HTML file**
         st.download_button(
-            "Download 7×7 Grid (HTML File)",
+            "Download 7x7 Grid (HTML File)",
             grid_to_html(st.session_state.df, st.session_state.topic, st.session_state.coherence, st.session_state.ratio).getvalue(),
             f"LOGOS_Grid_Data_{st.session_state.topic}.html",
           
