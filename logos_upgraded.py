@@ -231,7 +231,7 @@ def generate_reading(natural_sentence, planes, layers, groq_key, openai_key):
 
 
 # ==============================
-# PDF STYLE CACHE (NEW)
+# PDF STYLE CACHE (FIXED with Existence Check)
 # FIX for KeyError: "Style 'BodyText' already defined..."
 # ==============================
 
@@ -239,12 +239,20 @@ def generate_reading(natural_sentence, planes, layers, groq_key, openai_key):
 def get_pdf_styles():
     """Defines and caches the custom reportlab styles once."""
     styles = getSampleStyleSheet()
-    # Beautiful custom styles
-    styles.add(ParagraphStyle(name='TitleCustom', parent=styles['Title'], fontSize=22, alignment=1, spaceAfter=30, textColor=HexColor("#1e3a8a")))
-    styles.add(ParagraphStyle(name='HeadingBold', parent=styles['Normal'], fontSize=13, fontName='Helvetica-Bold', spaceAfter=12))
-    styles.add(ParagraphStyle(name='BodyText', parent=styles['Normal'], fontSize=11.5, leading=16, spaceAfter=10, alignment=4))  # 4 = justified
+    
+    # FIX: Add existence checks before adding styles
+    # This prevents ReportLab's internal KeyError when styles persist across Streamlit reruns.
+    if 'TitleCustom' not in styles:
+        styles.add(ParagraphStyle(name='TitleCustom', parent=styles['Title'], fontSize=22, alignment=1, spaceAfter=30, textColor=HexColor("#1e3a8a")))
+    
+    if 'HeadingBold' not in styles:
+        styles.add(ParagraphStyle(name='HeadingBold', parent=styles['Normal'], fontSize=13, fontName='Helvetica-Bold', spaceAfter=12))
+    
+    if 'BodyText' not in styles:
+        # The line that was causing the error, now safely guarded.
+        styles.add(ParagraphStyle(name='BodyText', parent=styles['Normal'], fontSize=11.5, leading=16, spaceAfter=10, alignment=4))  # 4 = justified
+        
     return styles
-
 # ==============================
 # PDF GENERATORS (FIXED & BEAUTIFUL)
 # ==============================
@@ -725,3 +733,4 @@ if st.session_state.df is not None:
         )
 else:
     st.info("Get your free key → paste it → ask your question.")
+
