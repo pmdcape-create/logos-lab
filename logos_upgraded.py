@@ -550,11 +550,13 @@ col1, col2 = st.columns([3, 1])
 with col1:
     # The key makes the value go into session_state
     natural_sentence = st.text_input(
-        label="Your question",
-        placeholder="Type your question here…",
-        label_visibility="collapsed",
-        key="user_question"          # ← this is what was breaking the button
-    )
+    label="Your question",
+    placeholder="Type your question here…",
+    label_visibility="collapsed",
+    key="user_question",
+    on_change=lambda: None,            # ← THIS IS THE FIX
+    type="default"
+)
 
     # ────── Dynamic border colors (blue when typing → green when filled) ──────
     current = st.session_state.get("user_question", "")
@@ -653,6 +655,7 @@ if st.session_state.df is not None:
         )
 else:
     st.info("Get your free key → paste it → ask your question.")
+
 
 
 
