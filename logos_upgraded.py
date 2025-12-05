@@ -534,33 +534,28 @@ def grid_to_html(df, topic, coherence, ratio):
     return buffer
 
 # ==============================
-# MAIN UI – CLEARER & BEAUTIFUL INPUT
+# MAIN UI – FINAL, BULLETPROOF VERSION
 # ==============================
 
 st.set_page_config(page_title="LOGOS", layout="wide")
 st.title("LOGOS Heptagon Revealer")
 st.markdown("Ask anything real. LOGOS hears you.")
 
-# ==============================
-# MAIN UI – FINAL FIXED INPUT + BUTTON
-# ==============================
-
 col1, col2 = st.columns([3, 1])
 
 with col1:
-    # The key makes the value go into session_state
-    natural_sentence = st.text_input(
-    label="Your question",
-    placeholder="Type your question here…",
-    label_visibility="collapsed",
-    key="user_question",
-    on_change=lambda: None,            # ← THIS IS THE FIX
-    type="default"
-)
+    # This puts the current text into session_state.user_question on every keystroke
+    st.text_input(
+        label="Your question",
+        placeholder="Type your question here…",
+        label_visibility="collapsed",
+        key="user_question",
+        on_change=lambda: None          # ← live update on every key press
+    )
 
-    # ────── Dynamic border colors (blue when typing → green when filled) ──────
-    current = st.session_state.get("user_question", "")
-    if current.strip():
+    # Live border color (blue when typing → green when filled)
+    current_text = st.session_state.get("user_question", "")
+    if current_text.strip():
         border_color = "#10b981"   # green
     else:
         border_color = "#e2e8f0"   # neutral
@@ -607,21 +602,51 @@ with col1:
 with col2:
     st.markdown("<br><br>", unsafe_allow_html=True)
     
-    # ←←← THIS IS THE CRITICAL FIX
-    user_input = st.session_state.get("user_question", "")
+    # THE CORRECT WAY — read from session_state
+    user_input = st.session_state.get("user_question", "").strip()
+    
     run = st.button(
         "Ask LOGOS",
         type="primary",
         use_container_width=True,
-        disabled=not user_input.strip()      # ← now works when typing!
+        disabled=not bool(user_input),      # active as soon as something is typed
+        key="ask_logos_button"              # give the button its own key
     )
 
-# Use the session_state value from now on (not the local variable)
+# ────── FROM THIS POINT ONWARD USE THE SESSION_STATE VALUE ──────
 natural_sentence = st.session_state.get("user_question", "")
-topic = sentence_to_topic(natural_sentence)
 
+topic = sentence_to_topic(natural_sentence)
 if natural_sentence.strip() and topic != "Unknown":
     st.caption(f"Understood as → **{topic}**")
+
+# THIS IS THE ONLY PLACE THAT TRIGGERS THE ANALYSIS
+if run and user_input:
+    # ←←← This now fires whether you typed or clicked an example
+    result = analyse(topic)
+    df = pd.DataFrame(result, index=layers, columns=planes)
+    total_chars = sum(len(str(c)) for row in result for c in row)
+    avg = total_chars / 49
+    coherence = round(min(avg * 2.7, 99.99), 2) 
+    ratio = round(avg / 10, 3)
+    reading = generate_structured_reading(topic, natural_sentence, coherence, ratio, df)
+    
+    full_reading = f"""LOGOS ANALYTICS FINDINGS
+{'='*60}
+Your question: {natural_sentence}
+Interpreted as: {topic}
+Date & time: {datetime.datetime.now():%Y-%m-%d %H:%M}
+Resonance Coherence: {coherence:.1f}%  │  Heptagonal Ratio: {ratio:.3f}/1.000
+
+{reading}
+"""
+    st.session_state.df = df
+    st.session_state.reading_text = full_reading
+    st.session_state.topic = topic
+    st.session_state.natural_sentence = natural_sentence
+    st.session_state.coherence = coherence
+    st.session_state.ratio = ratio
+    st.rerun()
 # ==============================
 # DISPLAY RESULTS
 # ==============================
@@ -655,6 +680,7 @@ if st.session_state.df is not None:
         )
 else:
     st.info("Get your free key → paste it → ask your question.")
+
 
 
 
