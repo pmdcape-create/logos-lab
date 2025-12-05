@@ -117,7 +117,7 @@ def generate_structured_reading(topic, natural_sentence, coherence, ratio, grid_
                  grid_df.loc["Instantiation","Ideation"]]
     except: cells = ["…"]*5
     
-    # --- CORRECTED PROMPT (Refined tone and focus on model cohesion) ---
+    # CORRECTED PROMPT (Refined tone and focus on model cohesion)
     prompt = f"""
     You are a wise and friendly expert consultant providing deep analysis for the user.
     The goal is to deliver a clear, honest, and warm interpretation, blending universal truths, current physics concepts (like entanglement, resonance, or fields), and the metaphysical basis of the LOGOS model. Do not use overly 'mystical' or 'fluffy' language.
@@ -132,7 +132,6 @@ def generate_structured_reading(topic, natural_sentence, coherence, ratio, grid_
     2. 3–5 numbered points that synthesize the "Strong Signals" and core grid themes (e.g., Cycles, Entanglement, Resonance, Blueprint) into actionable, grounded insights.
     3. A clear, expert "Bottom line" paragraph summarizing the overall truth revealed by the analysis.
     """
-    # --- END CORRECTION ---
 
     return llm.invoke(prompt).content.strip()
 
@@ -144,7 +143,7 @@ def analyse(topic):
             row_cells = []
             for q in row:
                 
-                # --- CORRECTED PROMPT (Refined tone and focus on physics/interconnection) ---
+                # CORRECTED PROMPT (Refined tone and focus on physics/interconnection)
                 prompt = f"""
                 You are a wise and friendly expert consultant.
                 Topic: {topic}
@@ -153,7 +152,6 @@ def analyse(topic):
                 Provide an answer for this node. The response must blend universal truth, current physics concepts (like entanglement, resonance, or fields), and the metaphysical basis of the LOGOS model.
                 Keep the answer concise (8-15 words), profound, and focused on the inherent inter-connectedness of the system.
                 """
-                # --- END CORRECTION ---
 
                 max_retries = 3
                 ans = "…"
@@ -178,54 +176,73 @@ def analyse(topic):
 # PDF GENERATORS (FIXED & BEAUTIFUL)
 # ==============================
 
+# **FIXED GRID PDF:** Uses Paragraphs to ensure cell text wrapping and readability.
 def grid_to_pdf(df, topic):
     buffer = BytesIO()
-    # Corrected: A4 is 595.3 x 841.9. Usable width is 595.3 - 80 = 515.3
     doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=50, bottomMargin=50, leftMargin=40, rightMargin=40)
     styles = getSampleStyleSheet()
+    
+    # Define a style for the body text in the grid cells (small size for high density)
+    grid_style = styles['Normal']
+    grid_style.fontSize = 7
+    grid_style.leading = 9
+    grid_style.alignment = 1 # Center
+    
     elements = [
         Paragraph(f"LOGOS 7×7 Grid – {topic}", styles['Title']),
         Spacer(1, 20)
     ]
-    data = [[""] + planes]
+    
+    # Construct data with Paragraph objects for proper text wrapping and display
+    data = [[""] + planes] # Start with the header row (text only)
+    
+    # Convert DataFrame cells into Paragraph objects
+    cell_data = []
     for layer, row in df.iterrows():
-        data.append([layer] + list(row))
-        
-    # --- CORRECTED COLUMN WIDTHS for A4 portrait ---
-    # Total usable width approx 515.3. Layer col: 120. Remaining 7 cols: 515.3 - 120 = 395.3
+        # First column is the Layer name (bold and standard font)
+        row_data = [Paragraph(f"<b>{layer}</b>", styles['Normal'])]
+        # Remaining columns are the cell contents, converted to Paragraphs with the small grid_style
+        for cell_content in row:
+            row_data.append(Paragraph(cell_content, grid_style))
+        cell_data.append(row_data)
+
+    data = [data[0]] + cell_data # Recombine header and cell data
+    
+    # Total usable width approx 515.3. Layer col: 120. Remaining 7 cols: 395.3
     planes_width = (515.3 - 120) / 7 
     table = Table(data, colWidths=[120] + [planes_width]*7)
-    # --- END CORRECTION ---
     
     table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#1e3a8a")),
         ('TEXTCOLOR', (0,0), (-1,0), colors.white),
         ('BACKGROUND', (0,1), (-1,-1), colors.HexColor("#f8fafc")),
         ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
-        ('FONTSIZE', (0,0), (-1,-1), 8),
+        ('FONTSIZE', (0,0), (-1,-1), 8), # Smallest font size for headers/defaults
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('TEXTCOLOR', (0,1), (0,-1), colors.HexColor("#1e3a8a")), # Layer names darker
     ]))
     elements.append(table)
     doc.build(elements)
     buffer.seek(0)
     return buffer
 
+# **FIXED FINDINGS PDF:** Renamed styles to prevent KeyError.
 def reading_to_pdf(text):
     buffer = BytesIO()
     doc = SimpleDocTemplate(
         buffer,
-        pagesize=landscape(A4),           # ← PERFECT LANDSCAPE
+        pagesize=landscape(A4),           # ← LANDSCAPE IS CONFIRMED HERE
         rightMargin=60, leftMargin=60,
         topMargin=70, bottomMargin=70
     )
     
     styles = getSampleStyleSheet()
     
-    # Beautiful custom styles
+    # Renamed styles to avoid conflict (KeyError fix)
     styles.add(ParagraphStyle(name='TitleCustom', parent=styles['Title'], fontSize=22, alignment=1, spaceAfter=30, textColor=HexColor("#1e3a8a")))
     styles.add(ParagraphStyle(name='HeadingBold', parent=styles['Normal'], fontSize=13, fontName='Helvetica-Bold', spaceAfter=12))
-    styles.add(ParagraphStyle(name='BodyText', parent=styles['Normal'], fontSize=11.5, leading=16, spaceAfter=10, alignment=4))  # 4 = justified
+    styles.add(ParagraphStyle(name='BodyTextCustom', parent=styles['Normal'], fontSize=11.5, leading=16, spaceAfter=10, alignment=4))  # 4 = justified
     
     elements = []
     elements.append(Paragraph("LOGOS ANALYTICS FINDINGS", styles['TitleCustom']))
@@ -238,20 +255,37 @@ def reading_to_pdf(text):
             continue
         clean = re.sub(r'[\*`_]', '', stripped)  # Remove markdown
         
-        # --- CORRECTED HEADING CHECK (Bold numbered list items) ---
+        # CORRECTED HEADING CHECK (Bold numbered list items)
         is_heading = any(clean.startswith(x) for x in [
             "Your question:", "Interpreted as:", "Date & time:", 
             "Resonance Coherence:", "Bottom line"
-        ]) or re.match(r'^\d+\.', clean) # Check for start of list (e.g., 1., 2.)
+        ]) or re.match(r'^\d+\.', clean)
         
         if is_heading:
             elements.append(Paragraph(f"<b>{clean}</b>", styles['HeadingBold']))
         else:
-            elements.append(Paragraph(clean, styles['BodyText']))
-        # --- END CORRECTION ---
+            # Use the renamed style
+            elements.append(Paragraph(clean, styles['BodyTextCustom']))
         elements.append(Spacer(1, 4))
 
     doc.build(elements)
+    buffer.seek(0)
+    return buffer
+
+# **NEW FUNCTION:** To export the grid as a simple, readable text file
+def grid_to_txt(df, topic, coherence, ratio):
+    buffer = BytesIO()
+    header = f"LOGOS 7x7 Grid Data - {topic}\n"
+    header += f"Date & time: {datetime.datetime.now():%Y-%m-%d %H:%M}\n"
+    header += f"Resonance Coherence: {coherence:.1f}%  │ Heptagonal Ratio: {ratio:.3f}/1.000\n\n"
+    
+    txt_content = header
+    
+    # Use to_markdown for a clean, aligned, text-based table
+    txt_content += "7x7 GRID NODES (Layer vs. Plane)\n"
+    txt_content += df.to_markdown(numalign="left", stralign="left")
+    
+    buffer.write(txt_content.encode('utf-8'))
     buffer.seek(0)
     return buffer
 
@@ -283,7 +317,6 @@ if run and topic != "Unknown":
     df = pd.DataFrame(result, index=layers, columns=planes)
     total_chars = sum(len(str(c)) for row in result for c in row)
     avg = total_chars / 49
-    # This calculation remains as is, but its effectiveness is now better informed by the LLM
     coherence = round(min(avg * 2.7, 99.99), 2) 
     ratio = round(avg / 10, 3)
     reading = generate_structured_reading(topic, natural_sentence, coherence, ratio, df)
@@ -293,7 +326,7 @@ if run and topic != "Unknown":
 Your question: {natural_sentence}
 Interpreted as: {topic}
 Date & time: {datetime.datetime.now():%Y-%m-%d %H:%M}
-Resonance Coherence: {coherence}%  │  Heptagonal Ratio: {ratio:.3f}/1.000
+Resonance Coherence: {coherence:.1f}%  │  Heptagonal Ratio: {ratio:.3f}/1.000
 
 {reading}
 """
@@ -320,13 +353,16 @@ if st.session_state.df is not None:
 
     c1, c2 = st.columns(2)
     with c1:
+        # **NEW: Download the Grid as a readable TXT file (using Markdown table format)**
         st.download_button(
-            "Download 7×7 Grid (PDF)",
-            grid_to_pdf(st.session_state.df, st.session_state.topic).getvalue(),
-            f"LOGOS_Grid_{st.session_state.topic}.pdf",
-            "application/pdf"
+            "Download 7×7 Grid (TEXT File)",
+            grid_to_txt(st.session_state.df, st.session_state.topic, st.session_state.coherence, st.session_state.ratio).getvalue(),
+            f"LOGOS_Grid_Data_{st.session_state.topic}.txt",
+            "text/plain"
         )
+        
     with c2:
+        # **FIXED: This button now works due to the KeyError fix**
         st.download_button(
             "Download Findings (Landscape PDF)",
             reading_to_pdf(st.session_state.reading_text).getvalue(),
@@ -335,3 +371,4 @@ if st.session_state.df is not None:
         )
 else:
     st.info("Get your free key → paste it → ask your question.")
+
