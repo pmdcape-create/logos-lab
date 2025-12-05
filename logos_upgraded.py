@@ -58,6 +58,8 @@ if api_key.startswith("gsk_"):
 else:
     llm = ChatOpenAI(model="gpt-4o", api_key=api_key, temperature=0.7)
 
+# ... (rest of the file remains the same until the WELCOME SCREEN block)
+
 # ==============================
 # WELCOME SCREEN (first visit only)
 # ==============================
@@ -66,28 +68,245 @@ if 'first_run' not in st.session_state:
     st.session_state.first_run = True
 
 if st.session_state.first_run:
+    
     st.title("Welcome to LOGOS Heptagon Revealer")
-    st.markdown("""
-    > **“After testing dozens of metaphysical tools, this is currently the most accurate and honest one on the internet.”** > — Grok, xAI
+    
+    # Use columns to place text on the left and the visualization on the right
+    col_text, col_viz = st.columns([1, 1])
+    
+    with col_text:
+        st.markdown("""
+        > **“After testing dozens of metaphysical tools, this is currently the most accurate and honest one on the internet.”** > — Grok, xAI
 
-    ### What you’ll receive
-    • A deep 7×7 diagnostic of any life situation  
-    • A clear, no-nonsense interpretation (like talking to a very smart friend)  
-    • Two beautiful files you can keep forever (a PDF summary and an HTML data grid)
+        #### What you’ll receive
+        * A deep **7×7 diagnostic** of any life situation  
+        * A clear, **no-nonsense interpretation** (like talking to a very smart friend)  
+        * Two beautiful files you can keep forever (a landscape PDF summary and an HTML data grid)
 
-    ### How to use it
-    1. Click the button → get your free Groq key  
-    2. Paste it and press ENTER 
-    3. Type your real question  
-    4. Click **Ask LOGOS** → receive your files
+        #### How to use it
+        1. Click the button → get your **free Groq key** (instant)  
+        2. Paste it and press ENTER 
+        3. Type your **real question** in the box  
+        4. Click **Ask LOGOS** → receive your files
+        """)
+        
+        st.markdown("Ask anything. LOGOS hears you exactly as you are.")
 
-    Ask anything. LOGOS hears you exactly as you are.
-    """)
+    with col_viz:
+        # Embed the interactive HTML/JavaScript model using st.html
+        # Note: If st.html is not available, you may need to use st.components.v1.html
+        # The content below is the full HTML/JS from logos heptagon Gem2.html
+        
+        heptagon_html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Conceptual Heptagon Model</title>
+            <script src="https://cdn.tailwindcss.com"></script>
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+            <style>
+                :root {
+                    --center-color: #fca5a5; /* Red-300 */
+                    --point-color: #f97316; /* Orange-600 */
+                    --text-color: #1f2937; /* Gray-800 */
+                }
+                body {
+                    font-family: 'Inter', sans-serif;
+                    background-color: transparent; /* Use transparent background */
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 100vh;
+                    padding: 0;
+                    margin: 0;
+                }
+                .container {
+                    width: 100%;
+                    max-width: 500px;
+                    background-color: white;
+                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+                    border-radius: 12px;
+                }
+                .heptagon-container {
+                    position: relative;
+                    width: 320px; /* Reduced base size to fit the column */
+                    height: 320px;
+                    margin: 20px auto;
+                }
+                .point {
+                    position: absolute;
+                    width: 80px;
+                    height: 80px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    text-align: center;
+                    padding: 4px;
+                    transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+                    cursor: pointer;
+                    border-radius: 12px;
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                }
+                .point:hover, .point.active {
+                    transform: scale(1.05);
+                    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+                    z-index: 10;
+                }
+                .layer-number {
+                    font-size: 1.25rem;
+                    font-weight: 700;
+                    line-height: 1;
+                }
+                .pane-name {
+                    font-size: 0.7rem;
+                    font-weight: 600;
+                }
+                .center-dot {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    width: 40px;
+                    height: 40px;
+                    background-color: var(--center-color);
+                    border-radius: 50%;
+                    transform: translate(-50%, -50%);
+                    z-index: 5;
+                    box-shadow: 0 0 10px rgba(252, 165, 165, 0.8);
+                }
+
+                /* Hiding the side panel for the small embedded view */
+                #details-panel { display: none; }
+                .flex-col > .container { padding: 0 !important; box-shadow: none !important; }
+
+                /* Adjusting for the Streamlit container padding */
+                .heptagon-container {
+                    margin: 0 auto;
+                }
+            </style>
+        </head>
+        <body>
+            <div id="app" class="container">
+                <div class="flex flex-col lg:flex-row items-center lg:items-start justify-center">
+
+                    <div class="heptagon-container" id="heptagon">
+                        <div class="center-dot"></div>
+                        </div>
+
+                    <div id="details-panel"></div>
+                </div>
+            </div>
+
+            <script>
+                // Define the 7 Layers and 7 Panes
+                const modelData = [
+                    { layer: 1, pane: "Purpose", color: 'bg-indigo-200', role: "Spark of being", influence: "Receives 'raw potential' and initializes unique entities or events." },
+                    { layer: 2, pane: "Information/Truth", color: 'bg-blue-200', role: "Sustained being", influence: "Maintains continuity and identity; subject to feedback from higher layers." },
+                    { layer: 3, pane: "Design", color: 'bg-teal-200', role: "Impact of existence", influence: "How instances affect the environment; creates observable outcomes." },
+                    { layer: 4, pane: "Creation", color: 'bg-green-200', role: "Integration (spacetime)", influence: "Mediates interactions among 1–3; the 'arena' of experience and evolution." },
+                    { layer: 5, pane: "Refinement", color: 'bg-yellow-200', role: "Quantum of decisions", influence: "Introduces choice, adaptation, and probabilistic collapse; modifies layers 1–4 dynamically." },
+                    { layer: 6, pane: "Revelation", color: 'bg-orange-200', role: "Blueprint layer (soul)", influence: "Maintains coherence, imposes laws and principles; acts like system governance." },
+                    { layer: 7, pane: "Continuity", color: 'bg-red-200', role: "Divine (consciousness)", role: "Divine (consciousness)", influence: "Provides ultimate direction, purpose, and overarching alignment; informs all layers below." }
+                ];
+
+                // Constants for positioning (adjusted for 320x320 view box)
+                const CENTER_X = 160;
+                const CENTER_Y = 160;
+                const RADIUS = 140; /* Reduced radius */
+                
+                let activePoint = null;
+
+                function calculateHeptagonPoint(index, totalPoints, radius, centerX, centerY) {
+                    const angleDeg = (360 / totalPoints) * index - 90; 
+                    const angleRad = angleDeg * (Math.PI / 180);
+                    const x = centerX + radius * Math.cos(angleRad);
+                    const y = centerY + radius * Math.sin(angleRad);
+                    return { x, y };
+                }
+
+                function updateDetails(data, pointElement = null) {
+                    if (activePoint && activePoint !== pointElement) {
+                        activePoint.classList.remove('active');
+                    }
+                    if (pointElement) {
+                        activePoint = pointElement;
+                        activePoint.classList.add('active');
+                    }
+                }
+
+                function clearDetails() {
+                    if (activePoint) {
+                        activePoint.classList.remove('active');
+                        activePoint = null;
+                    }
+                }
+                
+                function createHeptagon() {
+                    const container = document.getElementById('heptagon');
+                    container.innerHTML = '<div class="center-dot"></div>';
+
+                    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                    svg.setAttribute('width', '100%');
+                    svg.setAttribute('height', '100%');
+                    svg.style.position = 'absolute';
+                    svg.style.top = '0';
+                    svg.style.left = '0';
+                    svg.style.zIndex = '1';
+                    
+                    let pointsString = "";
+                    let pointsCoordinates = [];
+
+                    modelData.forEach((data, index) => {
+                        const { x, y } = calculateHeptagonPoint(index, 7, RADIUS, CENTER_X, CENTER_Y);
+                        pointsCoordinates.push({ x, y, data });
+                        pointsString += `${x},${y} `;
+                    });
+
+                    const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+                    polyline.setAttribute('points', pointsString.trim());
+                    polyline.setAttribute('stroke', '#4b5563'); 
+                    polyline.setAttribute('stroke-width', '2');
+                    polyline.setAttribute('fill', 'none');
+                    svg.appendChild(polyline);
+
+                    container.appendChild(svg);
+
+                    pointsCoordinates.forEach(({ x, y, data }) => {
+                        const point = document.createElement('div');
+                        point.className = `point ${data.color} text-gray-800 hover:ring-4 ring-offset-2 ring-${data.color.replace('bg-', '')}-500`;
+                        
+                        // Adjust position to center the div on the calculated point (80x80 div = 40px offset)
+                        point.style.left = `${x - 40}px`; 
+                        point.style.top = `${y - 40}px`;
+                        point.style.zIndex = '10';
+
+                        point.innerHTML = `
+                            <div class="layer-number">${data.layer}</div>
+                            <div class="pane-name">${data.pane}</div>
+                        `;
+
+                        // Add event listeners for interactivity
+                        point.addEventListener('mouseenter', () => updateDetails(data, point));
+                        point.addEventListener('click', () => updateDetails(data, point)); 
+                        point.addEventListener('mouseleave', clearDetails);
+
+                        container.appendChild(point);
+                    });
+                }
+
+                window.addEventListener('resize', createHeptagon);
+                window.onload = createHeptagon;
+            </script>
+        </body>
+        </html>
+        """
+        st.html(heptagon_html, height=350) # Set height to prevent scrollbar
+
+    # Place the action button below both columns for clarity
     if st.button("I’m ready → Begin", type="primary", use_container_width=True):
         st.session_state.first_run = False
         st.rerun()
     st.stop()
-
 # ==============================
 # CORE FUNCTIONS
 # ==============================
@@ -345,6 +564,7 @@ if st.session_state.df is not None:
         )
 else:
     st.info("Get your free key → paste it → ask your question.")
+
 
 
 
