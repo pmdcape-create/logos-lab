@@ -656,8 +656,7 @@ with col2:
     user_input = st.session_state.get("user_question", "").strip()
     
     run = st.button(
-        "Ask 
- LOGOS",
+        "Ask LOGOS", # FIX: Combined the string literal onto one line
         type="primary",
         use_container_width=True,
         disabled=not bool(user_input),      # active as soon as something is typed
