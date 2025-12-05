@@ -96,7 +96,6 @@ if st.session_state.first_run:
         4. Click **Ask LOGOS** → receive your files
         """)
         
-        # FIX APPLIED HERE: The string is now on a single line
         st.markdown("Ask anything. LOGOS hears you exactly as you are.")
 
     with col_viz:
@@ -374,8 +373,9 @@ if st.session_state.first_run:
     if st.button("I’m ready → Begin", type="primary", use_container_width=True):
         st.session_state.first_run = False
         st.rerun()
-   
-     st.stop()
+    
+    # FIX: Corrected indentation for st.stop()
+    st.stop()
      
 # ==============================
 # CORE FUNCTIONS
@@ -420,7 +420,7 @@ def generate_structured_reading(topic, natural_sentence, coherence, ratio, grid_
     User's Question: "{natural_sentence}"
     Interpreted Topic: {topic}
     # Coherence of Reading: {coherence:.1f}% 
-    Strong Interconnection Signals (Nodes): {" • ".in(cells)}
+    Strong Interconnection Signals (Nodes): {" • ".join(cells)} # FIX: Changed .in(cells) to .join(cells)
 
     Structure your answer as follows:
     1. A short, empathetic, and friendly opening acknowledging the question.
