@@ -414,14 +414,22 @@ def analyse(topic):
                 
                 # CORRECTED PROMPT (Refined tone and focus on physics/interconnection)
                 prompt = f"""
-                You are a wise and friendly expert consultant.
-                Topic: {topic}
-                Grid Question: {q}
-                
-                Provide an answer for this node. The response must blend universal truth, current physics concepts (like entanglement, resonance, or fields), and the metaphysical basis of the LOGOS model.
-                Keep the answer concise (8-15 words), profound, and focused on the inherent inter-connectedness of the system.
-                """
+                You are a wise and friendly expert consultant providing deep analysis for the user.
+                The goal is to deliver a clear, honest, and warm interpretation, blending universal truths, current physics concepts (like entanglement, resonance, or fields), and the metaphysical basis of the LOGOS model. Do not use overly 'mystical' or 'fluffy' language.
 
+                User's Question: "{natural_sentence}"
+                Interpreted Topic: {topic}
+                Coherence of Reading: {coherence:.1f}% 
+                Strong Interconnection Signals (Nodes): {" • ".join(cells)}
+
+Structure your answer as follows:
+1. A short, empathetic, and friendly opening acknowledging the question.
+2. 3–5 numbered points that synthesize the "Strong Signals" and core grid themes (e.g., Cycles, Entanglement, Resonance, Blueprint) into actionable, grounded insights.
+3. A clear, expert "Bottom line" paragraph summarizing the overall truth revealed by the analysis.
+
+For topics with speculative elements (e.g., ghosts or unproven interactions), balance responses by noting metaphysical possibilities in the model (like spiritual entanglement) while indicating conflicts with current facts/physics neutrally. Connect fairly to the user's beliefs without pushback or dismissal.
+"""
+                
                 max_retries = 3
                 ans = "…"
                 for attempt in range(max_retries):
@@ -614,3 +622,4 @@ if st.session_state.df is not None:
         )
 else:
     st.info("Get your free key → paste it → ask your question.")
+
