@@ -1,4 +1,4 @@
-import streamlit as st
+ import streamlit as st
 import pandas as pd
 import numpy as np
 from langchain_openai import ChatOpenAI
@@ -7,7 +7,7 @@ import datetime
 import re
 from io import BytesIO
 
-# ReportLab imports for beautiful PDFs
+# ReportLab imports for beautiful PDFs (only used for the Findings summary)
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -73,13 +73,13 @@ if st.session_state.first_run:
     ### What you’ll receive
     • A deep 7×7 diagnostic of any life situation  
     • A clear, no-nonsense interpretation (like talking to a very smart friend)  
-    • Two beautiful PDFs you can keep forever (now in perfect landscape format)
+    • Two beautiful files you can keep forever (a PDF summary and an HTML data grid)
 
     ### How to use it
     1. Click the button → get your free Groq key  
     2. Paste it and press ENTER 
     3. Type your real question  
-    4. Click **Ask LOGOS** → receive your PDFs
+    4. Click **Ask LOGOS** → receive your files
 
     Ask anything. LOGOS hears you exactly as you are.
     """)
@@ -173,61 +173,10 @@ def analyse(topic):
     return np.array(matrix)
 
 # ==============================
-# PDF GENERATORS (FIXED & BEAUTIFUL)
+# FILE GENERATORS (FIXED & BEAUTIFUL)
 # ==============================
 
-# **FIXED GRID PDF:** Uses Paragraphs to ensure cell text wrapping and readability.
-def grid_to_pdf(df, topic):
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=50, bottomMargin=50, leftMargin=40, rightMargin=40)
-    styles = getSampleStyleSheet()
-    
-    # Define a style for the body text in the grid cells (small size for high density)
-    grid_style = styles['Normal']
-    grid_style.fontSize = 7
-    grid_style.leading = 9
-    grid_style.alignment = 1 # Center
-    
-    elements = [
-        Paragraph(f"LOGOS 7×7 Grid – {topic}", styles['Title']),
-        Spacer(1, 20)
-    ]
-    
-    # Construct data with Paragraph objects for proper text wrapping and display
-    data = [[""] + planes] # Start with the header row (text only)
-    
-    # Convert DataFrame cells into Paragraph objects
-    cell_data = []
-    for layer, row in df.iterrows():
-        # First column is the Layer name (bold and standard font)
-        row_data = [Paragraph(f"<b>{layer}</b>", styles['Normal'])]
-        # Remaining columns are the cell contents, converted to Paragraphs with the small grid_style
-        for cell_content in row:
-            row_data.append(Paragraph(cell_content, grid_style))
-        cell_data.append(row_data)
-
-    data = [data[0]] + cell_data # Recombine header and cell data
-    
-    # Total usable width approx 515.3. Layer col: 120. Remaining 7 cols: 395.3
-    planes_width = (515.3 - 120) / 7 
-    table = Table(data, colWidths=[120] + [planes_width]*7)
-    
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#1e3a8a")),
-        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-        ('BACKGROUND', (0,1), (-1,-1), colors.HexColor("#f8fafc")),
-        ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
-        ('FONTSIZE', (0,0), (-1,-1), 8), # Smallest font size for headers/defaults
-        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('TEXTCOLOR', (0,1), (0,-1), colors.HexColor("#1e3a8a")), # Layer names darker
-    ]))
-    elements.append(table)
-    doc.build(elements)
-    buffer.seek(0)
-    return buffer
-
-# **FIXED FINDINGS PDF:** Renamed styles to prevent KeyError.
+# FIXED FINDINGS PDF: Renamed styles to prevent KeyError.
 def reading_to_pdf(text):
     buffer = BytesIO()
     doc = SimpleDocTemplate(
@@ -272,20 +221,45 @@ def reading_to_pdf(text):
     buffer.seek(0)
     return buffer
 
-# **NEW FUNCTION:** To export the grid as a simple, readable text file
-def grid_to_txt(df, topic, coherence, ratio):
+# NEW FUNCTION: To export the grid as a simple, readable HTML file
+def grid_to_html(df, topic, coherence, ratio):
     buffer = BytesIO()
-    header = f"LOGOS 7x7 Grid Data - {topic}\n"
-    header += f"Date & time: {datetime.datetime.now():%Y-%m-%d %H:%M}\n"
-    header += f"Resonance Coherence: {coherence:.1f}%  │ Heptagonal Ratio: {ratio:.3f}/1.000\n\n"
     
-    txt_content = header
+    # Simple HTML header and styling for readability
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>LOGOS 7x7 Grid Data - {topic}</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; margin: 40px; background-color: #f8fafc; color: #1e3a8a; }}
+            h1 {{ color: #1e3a8a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }}
+            h2 {{ color: #475569; margin-top: 20px; }}
+            table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
+            th, td {{ border: 1px solid #e2e8f0; padding: 12px; text-align: center; font-size: 11px; }}
+            th {{ background-color: #1e3a8a; color: white; font-weight: bold; }}
+            tr:nth-child(even) {{ background-color: #f0f4f8; }}
+            .layer-header {{ font-weight: bold; background-color: #e2e8f0; color: #1e3a8a; }}
+        </style>
+    </head>
+    <body>
+        <h1>LOGOS 7x7 Grid Data</h1>
+        <h2>Topic: {topic}</h2>
+        <p><b>Date & time:</b> {datetime.datetime.now():%Y-%m-%d %H:%M}</p>
+        <p><b>Resonance Coherence:</b> {coherence:.1f}% &nbsp; | &nbsp; <b>Heptagonal Ratio:</b> {ratio:.3f}/1.000</p>
+    """
     
-    # Use to_markdown for a clean, aligned, text-based table
-    txt_content += "7x7 GRID NODES (Layer vs. Plane)\n"
-    txt_content += df.to_markdown(numalign="left", stralign="left")
+    # Use to_html, clean up class names for layer headers
+    html_table = df.to_html(classes='table table-striped', header=True, index=True)
     
-    buffer.write(txt_content.encode('utf-8'))
+    # Adding a class to the index column (Layers) for better visibility
+    html_table = html_table.replace('<th></th>', '<th class="layer-header">Layer</th>')
+    html_table = html_table.replace('<tr>\n<th>', '<tr>\n<th class="layer-header">')
+    
+    html_content += html_table
+    html_content += "</body></html>"
+    
+    buffer.write(html_content.encode('utf-8'))
     buffer.seek(0)
     return buffer
 
@@ -353,16 +327,16 @@ if st.session_state.df is not None:
 
     c1, c2 = st.columns(2)
     with c1:
-        # **NEW: Download the Grid as a readable TXT file (using Markdown table format)**
+        # **NEW: Download the Grid as a readable HTML file**
         st.download_button(
-            "Download 7×7 Grid (TEXT File)",
-            grid_to_txt(st.session_state.df, st.session_state.topic, st.session_state.coherence, st.session_state.ratio).getvalue(),
-            f"LOGOS_Grid_Data_{st.session_state.topic}.txt",
-            "text/plain"
+            "Download 7×7 Grid (HTML File)",
+            grid_to_html(st.session_state.df, st.session_state.topic, st.session_state.coherence, st.session_state.ratio).getvalue(),
+            f"LOGOS_Grid_Data_{st.session_state.topic}.html",
+            "text/html"
         )
         
     with c2:
-        # **FIXED: This button now works due to the KeyError fix**
+        # The Findings PDF download is stable and fully functional
         st.download_button(
             "Download Findings (Landscape PDF)",
             reading_to_pdf(st.session_state.reading_text).getvalue(),
@@ -371,4 +345,5 @@ if st.session_state.df is not None:
         )
 else:
     st.info("Get your free key → paste it → ask your question.")
+
 
