@@ -437,8 +437,7 @@ def analyse(topic):
             row_cells = []
             for q in row:
                 
-                # THIS is the 
-                correct_prompt for individual 7x7 nodes # FIX: Changed 7×7 to 7x7
+                # THIS is the correct_prompt for individual 7x7 nodes
                 prompt = f"""
                 You are a wise and friendly expert consultant blending physics and metaphysics.
  Topic: {topic}
