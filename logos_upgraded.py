@@ -231,7 +231,22 @@ def generate_reading(natural_sentence, planes, layers, groq_key, openai_key):
 
 
 # ==============================
-# PDF GENERATORS (FIXED & BEAUTIFUL) - NO CHANGE
+# PDF STYLE CACHE (NEW)
+# FIX for KeyError: "Style 'BodyText' already defined..."
+# ==============================
+
+@st.cache_resource
+def get_pdf_styles():
+    """Defines and caches the custom reportlab styles once."""
+    styles = getSampleStyleSheet()
+    # Beautiful custom styles
+    styles.add(ParagraphStyle(name='TitleCustom', parent=styles['Title'], fontSize=22, alignment=1, spaceAfter=30, textColor=HexColor("#1e3a8a")))
+    styles.add(ParagraphStyle(name='HeadingBold', parent=styles['Normal'], fontSize=13, fontName='Helvetica-Bold', spaceAfter=12))
+    styles.add(ParagraphStyle(name='BodyText', parent=styles['Normal'], fontSize=11.5, leading=16, spaceAfter=10, alignment=4))  # 4 = justified
+    return styles
+
+# ==============================
+# PDF GENERATORS (FIXED & BEAUTIFUL)
 # ==============================
 
 def grid_to_pdf(df, topic):
@@ -269,12 +284,8 @@ def reading_to_pdf(text):
         topMargin=70, bottomMargin=70
     )
     
-    styles = getSampleStyleSheet()
-    
-    # Beautiful custom styles
-    styles.add(ParagraphStyle(name='TitleCustom', parent=styles['Title'], fontSize=22, alignment=1, spaceAfter=30, textColor=HexColor("#1e3a8a")))
-    styles.add(ParagraphStyle(name='HeadingBold', parent=styles['Normal'], fontSize=13, fontName='Helvetica-Bold', spaceAfter=12))
-    styles.add(ParagraphStyle(name='BodyText', parent=styles['Normal'], fontSize=11.5, leading=16, spaceAfter=10, alignment=4))  # 4 = justified
+    # MODIFIED: Get styles from the cached function to prevent re-adding
+    styles = get_pdf_styles()
     
     elements = []
     elements.append(Paragraph("LOGOS ANALYTICS FINDINGS", styles['TitleCustom']))
@@ -714,5 +725,3 @@ if st.session_state.df is not None:
         )
 else:
     st.info("Get your free key → paste it → ask your question.")
-
-
