@@ -534,7 +534,7 @@ def grid_to_html(df, topic, coherence, ratio):
     return buffer
 
 # ==============================
-# MAIN UI
+# MAIN UI – CLEARER & BEAUTIFUL INPUT
 # ==============================
 
 st.set_page_config(page_title="LOGOS", layout="wide")
@@ -542,46 +542,76 @@ st.title("LOGOS Heptagon Revealer")
 st.markdown("Ask anything real. LOGOS hears you.")
 
 col1, col2 = st.columns([3, 1])
+
 with col1:
     natural_sentence = st.text_input(
-        "Your question",
-        placeholder="Should I start my own business? │ What is consciousness? │ Why am I still alive kidney-function-6% age-85?",
-        label_visibility="collapsed"
+        label="Your question",
+        placeholder="Type your question here…",
+        label_visibility="collapsed",
+        key="user_question"
     )
-with col2:
-    st.markdown("<br>", unsafe_allow_html=True)
-    run = st.button("Ask LOGOS", type="primary", use_container_width=True)
 
+    # Dynamic border: neutral → blue (typing) → green (filled)
+    if natural_sentence.strip():
+        border_color = "#10b981"  # green-500
+    elif st.session_state.get("user_question", "") == "":
+        border_color = "#e2e8f0"  # slate-200
+    else:
+        border_color = "#3b82f6"  # blue-500
+
+    # Custom CSS injection for beautiful input
+    st.markdown(
+        f"""
+        <style>
+            div[data-testid="stTextInput"] input {{
+                border: 2px solid {border_color} !important;
+                border-radius: 12px !important;
+                padding: 14px 18px !important;
+                font-size: 1.15rem !important;
+                transition: all 0.3s ease !important;
+            }}
+            div[data-testid="stTextInput"] input:focus {{
+                border-color: #3b82f6 !important;
+                box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2) !important;
+            }}
+            div[data-testid="stTextInput"] input:not(:placeholder-shown) {{
+                border-color: #10b981 !important;
+                box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15) !important;
+            }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # Beautiful example questions (always visible)
+    with st.expander("Examples – click to use", expanded=False):
+        examples = [
+            "Should I start my own business at age 42?",
+            "What is the true nature of consciousness?",
+            "Why do I feel a ghost poking me at night?",
+            "How can I heal from this breakup?",
+            "What is blocking my financial abundance?",
+            "Kidney function 6%, age 85 – why am I still alive?",
+            "Who am I really?"
+        ]
+        for ex in examples:
+            if st.button(ex, key=f"ex_{ex}", use_container_width=True):
+                st.session_state.user_question = ex
+                st.rerun()
+
+with col2:
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    run = st.button(
+        "Ask LOGOS",
+        type="primary",
+        use_container_width=True,
+        disabled=not natural_sentence.strip()
+    )
+
+# Show interpreted topic
 topic = sentence_to_topic(natural_sentence)
 if natural_sentence.strip() and topic != "Unknown":
     st.caption(f"Understood as → **{topic}**")
-
-if run and topic != "Unknown":
-    result = analyse(topic)
-    df = pd.DataFrame(result, index=layers, columns=planes)
-    total_chars = sum(len(str(c)) for row in result for c in row)
-    avg = total_chars / 49
-    coherence = round(min(avg * 2.7, 99.99), 2) 
-    ratio = round(avg / 10, 3)
-    reading = generate_structured_reading(topic, natural_sentence, coherence, ratio, df)
-    
-    full_reading = f"""LOGOS ANALYTICS FINDINGS
-{'='*60}
-Your question: {natural_sentence}
-Interpreted as: {topic}
-Date & time: {datetime.datetime.now():%Y-%m-%d %H:%M}
-Resonance Coherence: {coherence:.1f}%  │  Heptagonal Ratio: {ratio:.3f}/1.000
-
-{reading}
-"""
-    st.session_state.df = df
-    st.session_state.reading_text = full_reading
-    st.session_state.topic = topic
-    st.session_state.natural_sentence = natural_sentence
-    st.session_state.coherence = coherence
-    st.session_state.ratio = ratio
-    st.rerun()
-
 # ==============================
 # DISPLAY RESULTS
 # ==============================
@@ -615,5 +645,6 @@ if st.session_state.df is not None:
         )
 else:
     st.info("Get your free key → paste it → ask your question.")
+
 
 
