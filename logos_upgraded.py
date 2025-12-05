@@ -391,15 +391,26 @@ if 'df' not in st.session_state:
 
 def sentence_to_topic(sentence):
     if not sentence.strip(): return ""
+    
+    # 1. Extract and clean numbers
     numbers = re.findall(r'\b\d+%|\b\d+\b', sentence)
-    numbers_clean = [n.replace('%','Percent') if '%' in n else f"Age{n}" if int(n)>=30 else n for n in numbers]
-    stop_words = {'i','me','my','we','you','he','she','it','they','the','a','an','and','but','if','or','what','when','how','will','should','can','just','now','please'}
-    words = re.findall(r'\b[a-zA-Z]{4,}\b', sentence.lower())
+    numbers_clean = [n.replace('%','Percent') if '%' in n else f"Age{n}" if len(n) > 2 and int(n)>=30 else n for n in numbers]
+    
+    # 2. Define stop words and filter words (Changed minimum word length to 3 and added 'do')
+    stop_words = {'i','me','my','we','you','he','she','it','they','the','a','an','and','but','if','or','what','when','how','will','should','can','just','now','please', 'do'}
+    words = re.findall(r'\b[a-zA-Z]{3,}\b', sentence.lower())
     clean_words = [w.capitalize() for w in words if w not in stop_words]
    
+    # 3. Combine and ensure uniqueness (maintaining order)
     parts = numbers_clean + clean_words
-    seen = set();
-    unique = [p for p in parts if not (p in seen or seen.add(p))]
+    seen = set()
+    unique = []
+    for p in parts:
+        if p not in seen:
+            seen.add(p)
+            unique.append(p)
+            
+    # 4. Join all unique key terms with a separator
     return "–".join(unique) if unique else "Unknown"
 
 def generate_structured_reading(topic, natural_sentence, coherence, ratio, grid_df):
