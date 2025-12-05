@@ -601,11 +601,12 @@ with col1:
 
 with col2:
     st.markdown("<br><br>", unsafe_allow_html=True)
+    user_input = st.session_state.get("user_question", "")
     run = st.button(
         "Ask LOGOS",
         type="primary",
         use_container_width=True,
-        disabled=not natural_sentence.strip()
+        disabled=not user_input.strip()  # Now works whether typing or clicking example
     )
 
 # Show interpreted topic
@@ -645,6 +646,7 @@ if st.session_state.df is not None:
         )
 else:
     st.info("Get your free key → paste it → ask your question.")
+
 
 
 
